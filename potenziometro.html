@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="it">
+  <head>
+<!--@head-->
+    <title>Potenziometro — Adveny</title>
+    <meta name="description" content="Richiedi l'analisi del tuo potenziale. Completa il form, bastano 2 minuti." />
+  </head>
+  <body data-page="potenziometro">
+    <div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="page-veil" aria-hidden="true"></div>
+
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <linearGradient id="irigrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#8b4dff" /><stop offset=".5" stop-color="#b596ff" /><stop offset="1" stop-color="#e4dbff" />
+        </linearGradient>
+      </defs>
+    </svg>
+
+    <div class="pz" data-pz aria-live="polite">
+      <header class="pz__head glass">
+        <a href="/" aria-label="Torna alla homepage"><img src="/img/adveny-logo-white.svg" alt="Adveny" width="554" height="154" /></a>
+        <ol class="pz__steps" data-pz-steps aria-hidden="true"></ol>
+        <div class="pz__meter" role="progressbar" aria-label="Avanzamento dell'analisi" aria-valuemin="1" aria-valuemax="7" data-pz-meter>
+          <span data-pz-count>1/7</span>
+          <span class="pz__meter-bar"><i data-pz-bar style="width: 14%"></i></span>
+        </div>
+      </header>
+      <main data-pz-main></main>
+    </div>
+
+    <div class="pz__transition" data-pz-transition role="status"><p class="glass"></p></div>
+
+    <script type="module" src="/src/pages/potenziometro.ts"></script>
+  </body>
+</html>

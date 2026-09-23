@@ -1,0 +1,252 @@
+import { boot, gsap, reduceMotion, getLenis } from '../core'
+import { STEPS, type Question } from '../data'
+import { ICONS } from '../icons'
+
+type Answers = Record<string, string | string[] | undefined>
+
+const main = document.querySelector<HTMLElement>('[data-pz-main]')!
+const stepsNav = document.querySelector<HTMLElement>('[data-pz-steps]')!
+const count = document.querySelector<HTMLElement>('[data-pz-count]')!
+const bar = document.querySelector<HTMLElement>('[data-pz-bar]')!
+const meter = document.querySelector<HTMLElement>('[data-pz-meter]')!
+const overlay = document.querySelector<HTMLElement>('[data-pz-transition]')!
+
+const answers: Answers = { team: 'Solo io' }
+let step = 0
+let busy = false
+
+// arrivo dalla home con il settore già scelto
+const pre = new URLSearchParams(location.search).get('settore')
+if (pre !== null && STEPS[0].questions[0].type === 'sector') {
+  const s = STEPS[0].questions[0].options[Number(pre)]
+  if (s) answers.settore = s.label
+}
+
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
+const filled = (v: unknown) => (Array.isArray(v) ? v.length > 0 : typeof v === 'string' && v.trim().length > 0)
+
+function isComplete() {
+  return STEPS[step].questions.every((q) => {
+    if (q.type === 'textarea') return !!q.optional || filled(answers[q.key])
+    if (q.type === 'form') return q.fields.every((f) => filled(answers[f.key]))
+    return filled(answers[q.key])
+  })
+}
+
+function renderQuestion(q: Question) {
+  const head = q.label
+    ? `<p class="pz__label" id="q-${q.key}">${ICONS.question}<span>${q.label}</span></p>${q.hint ? `<p class="pz__hint">${q.hint}</p>` : ''}`
+    : ''
+  let body = ''
+  if (q.type === 'sector') {
+    body = `<div class="options" role="group" aria-labelledby="q-${q.key}">${q.options.map((o) => `
+      <button class="opt" type="button" data-key="${q.key}" data-val="${esc(o.label)}" data-mode="single" aria-pressed="${answers[q.key] === o.label}">
+        <span class="opt__icon">${ICONS[o.icon]}</span><span class="opt__label">${o.label}</span><span class="opt__check">${ICONS.check}</span>
+      </button>`).join('')}</div>`
+  } else if (q.type === 'slider') {
+    const i = Math.max(0, q.options.indexOf(String(answers[q.key] ?? q.options[0])))
+    const fill = (i / (q.options.length - 1)) * 100
+    body = `<div class="slider" data-slider="${q.key}">
+      <div class="slider__labels">${q.options.map((o, j) => `<button type="button" class="${j === i ? 'is-selected' : ''}" data-slide="${j}">${o}</button>`).join('')}</div>
+      <input type="range" min="0" max="${q.options.length - 1}" value="${i}" aria-label="${q.label}" style="--fill:${fill}%" />
+    </div>`
+  } else if (q.type === 'multi' || q.type === 'single') {
+    const cur = answers[q.key]
+    const full = q.type === 'multi' && q.max && Array.isArray(cur) && cur.length >= q.max
+    body = `<div class="options" role="group" aria-labelledby="q-${q.key}">${q.options.map((o) => {
+      const on = q.type === 'single' ? cur === o : Array.isArray(cur) && cur.includes(o)
+      return `<button class="opt" type="button" data-key="${q.key}" data-val="${esc(o)}" data-mode="${q.type}" data-max="${q.type === 'multi' ? q.max ?? '' : ''}" aria-pressed="${on}" ${full && !on ? 'disabled' : ''}>
+        <span class="opt__label">${o}</span><span class="opt__check">${ICONS.check}</span></button>`
+    }).join('')}</div>`
+  } else if (q.type === 'textarea') {
+    body = `<label class="field"><textarea data-text="${q.key}" maxlength="1200" placeholder="${esc(q.placeholder)}" aria-labelledby="q-${q.key}">${esc(String(answers[q.key] ?? ''))}</textarea></label>`
+  } else if (q.type === 'form') {
+    body = `<div class="form__row">${q.fields.map((f) => `
+      <label class="field"><input data-text="${f.key}" type="${f.type}" autocomplete="${f.autoComplete}" required placeholder=" "
+        maxlength="${f.type === 'email' ? 254 : f.type === 'tel' ? 30 : 120}" value="${esc(String(answers[f.key] ?? ''))}" /><span>${f.placeholder}</span></label>`).join('')}</div>`
+  }
+  return `<div class="pz__q">${head}${body}</div>`
+}
+
+function renderNav() {
+  stepsNav.innerHTML = STEPS.map((s, i) => `<li class="${i < step ? 'is-done' : ''} ${i === step ? 'is-current' : ''}">${ICONS[s.icon]}<span>${s.title}</span></li>`).join('')
+  count.textContent = `${step + 1}/${STEPS.length}`
+  bar.style.width = `${((step + 1) / STEPS.length) * 100}%`
+  meter.setAttribute('aria-valuenow', String(step + 1))
+}
+
+function renderStep(dir = 1) {
+  const s = STEPS[step]
+  renderNav()
+  main.innerHTML = `
+    <form class="pz__main" data-step novalidate>
+      <div class="pz__intro">
+        <div class="pz__icon glass">${ICONS[s.icon]}</div>
+        <p class="eyebrow">Step ${step + 1}</p>
+        <h1 class="h2" tabindex="-1" data-title>${s.title}</h1>
+        <p class="lead">${s.subtitle}</p>
+      </div>
+      <div class="pz__card glass">
+        ${s.questions.map(renderQuestion).join('')}
+        <div class="pz__actions">
+          ${step > 0 ? `<button class="btn btn--glass btn--back" type="button" data-back><span>Indietro</span></button>` : ''}
+          <button class="btn btn--light" type="submit" data-next ${isComplete() ? '' : 'disabled'}><span>${s.cta ?? 'Prosegui'}</span></button>
+        </div>
+        ${step === STEPS.length - 1 ? `<p class="pz__privacy">Questa demo non invia né conserva i tuoi dati. Le informazioni vengono eliminate chiudendo o aggiornando la pagina.</p>` : ''}
+      </div>
+    </form>`
+  bind()
+  getLenis()?.scrollTo(0, { immediate: true })
+  if (!reduceMotion) {
+    const intro = main.querySelectorAll('.pz__intro > *')
+    gsap.from(intro, { x: -24 * dir, opacity: 0, duration: 0.8, stagger: 0.05, ease: 'expo.out' })
+    gsap.from(main.querySelector('.pz__card'), { y: 30, opacity: 0, duration: 0.9, ease: 'expo.out' })
+    gsap.from(main.querySelectorAll('.opt, .slider__labels button'), { y: 10, opacity: 0, duration: 0.6, stagger: 0.02, delay: 0.1, ease: 'expo.out' })
+  }
+  main.querySelector<HTMLElement>('[data-title]')?.focus({ preventScroll: true })
+}
+
+function refreshNext() {
+  const b = main.querySelector<HTMLButtonElement>('[data-next]')
+  if (b) b.disabled = !isComplete()
+}
+
+function bind() {
+  const form = main.querySelector<HTMLFormElement>('[data-step]')!
+
+  form.addEventListener('click', (e) => {
+    const opt = (e.target as HTMLElement).closest<HTMLButtonElement>('.opt')
+    if (opt) {
+      const { key, val, mode } = opt.dataset as { key: string; val: string; mode: string }
+      const value = val
+      if (mode === 'single') {
+        answers[key] = value
+        form.querySelectorAll<HTMLButtonElement>(`.opt[data-key="${key}"]`).forEach((b) => b.setAttribute('aria-pressed', String(b === opt)))
+      } else {
+        const cur = new Set(Array.isArray(answers[key]) ? (answers[key] as string[]) : [])
+        cur.has(value) ? cur.delete(value) : cur.add(value)
+        answers[key] = [...cur]
+        opt.setAttribute('aria-pressed', String(cur.has(value)))
+        const max = Number(opt.dataset.max || 0)
+        if (max) {
+          form.querySelectorAll<HTMLButtonElement>(`.opt[data-key="${key}"]`).forEach((b) => {
+            b.disabled = cur.size >= max && b.getAttribute('aria-pressed') !== 'true'
+          })
+        }
+      }
+            refreshNext()
+      return
+    }
+    const slide = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-slide]')
+    if (slide) setSlider(slide.closest<HTMLElement>('[data-slider]')!, Number(slide.dataset.slide))
+    if ((e.target as HTMLElement).closest('[data-back]')) go(-1)
+  })
+
+  form.querySelectorAll<HTMLElement>('[data-slider]').forEach((wrap) => {
+    wrap.querySelector('input')!.addEventListener('input', (e) => setSlider(wrap, Number((e.target as HTMLInputElement).value)))
+  })
+
+  form.addEventListener('input', (e) => {
+    const t = e.target as HTMLInputElement
+    if (t.dataset.text) {
+      answers[t.dataset.text] = t.value
+      refreshNext()
+    }
+  })
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault()
+    if (!isComplete() || busy) return
+    const email = form.querySelector<HTMLInputElement>('input[type="email"]')
+    if (email && !email.checkValidity()) {
+      email.focus()
+      gsap.fromTo(email, { x: -8 }, { x: 0, duration: 0.6, ease: 'elastic.out(1, 0.3)' })
+      return
+    }
+    go(1)
+  })
+}
+
+function setSlider(wrap: HTMLElement, i: number) {
+  const key = wrap.dataset.slider!
+  const q = STEPS[step].questions.find((x) => x.key === key)!
+  if (q.type !== 'slider') return
+  answers[key] = q.options[i]
+  const input = wrap.querySelector('input')!
+  input.value = String(i)
+  input.style.setProperty('--fill', `${(i / (q.options.length - 1)) * 100}%`)
+  wrap.querySelectorAll('[data-slide]').forEach((b, j) => b.classList.toggle('is-selected', j === i))
+  refreshNext()
+}
+
+function go(dir: 1 | -1) {
+  if (busy) return
+  const leaving = STEPS[step]
+  if (dir === 1 && step === STEPS.length - 1) return showResult()
+  const msg = dir === 1 ? leaving.transition : null
+  const swap = () => {
+    step += dir
+    renderStep(dir)
+  }
+  if (!msg || reduceMotion) return swap()
+  busy = true
+  const p = overlay.querySelector('p')!
+  p.textContent = msg
+  overlay.classList.add('is-on')
+  gsap.to(main, { opacity: 0, filter: 'blur(12px)', duration: 0.35 })
+  setTimeout(() => {
+    swap()
+    gsap.to(main, { opacity: 1, filter: 'blur(0px)', duration: 0.5 })
+    overlay.classList.remove('is-on')
+    busy = false
+  }, 1100)
+}
+
+function showResult() {
+  busy = true
+  const p = overlay.querySelector('p')!
+  p.textContent = 'Analisi in corso...'
+  overlay.classList.add('is-on')
+  gsap.to(main, { opacity: 0, filter: 'blur(12px)', duration: 0.35 })
+  setTimeout(() => {
+    overlay.classList.remove('is-on')
+    step = STEPS.length - 1
+    stepsNav.querySelectorAll('li').forEach((li) => { li.classList.remove('is-current'); li.classList.add('is-done') })
+    bar.style.width = '100%'
+    // demo: punteggio casuale, come sul sito attuale
+    const score = 58 + Math.floor(Math.random() * 35)
+    const C = 2 * Math.PI * 85
+    main.innerHTML = `
+      <section class="pz__result glass">
+        <p class="eyebrow">${ICONS.check.replace('<svg', '<svg width="16" height="16" style="stroke:#fff;fill:none;stroke-width:2"')} Analisi completata</p>
+        <div class="score">
+          <svg viewBox="0 0 190 190" aria-hidden="true">
+            <circle class="track" cx="95" cy="95" r="85" />
+            <circle class="value" cx="95" cy="95" r="85" stroke-dasharray="${C}" stroke-dashoffset="${C}" data-ring />
+          </svg>
+          <strong><span data-score>0</span><small>%</small></strong>
+        </div>
+        <h1 class="h2" tabindex="-1" data-title>Il tuo potenziale di <span class="iri">crescita</span></h1>
+        <p class="lead" style="max-width: 52ch">Abbiamo analizzato la tua attività su 6 aree chiave: acquisizione, fidelizzazione, strumenti, metodo, strategia e visione.</p>
+        <p class="pz__demo">Questo è un risultato dimostrativo: il punteggio viene generato casualmente e nessun dato è stato inviato o salvato.</p>
+        <a class="btn btn--light" href="/#casi"><span>Scopri i casi studio</span></a>
+      </section>`
+    gsap.to(main, { opacity: 1, filter: 'blur(0px)', duration: 0.5 })
+    gsap.from(main.querySelector('.pz__result'), { y: 60, scale: 0.95, opacity: 0, duration: 1.2, ease: 'expo.out' })
+    const ring = main.querySelector<SVGCircleElement>('[data-ring]')!
+    const out = main.querySelector<HTMLElement>('[data-score]')!
+    const o = { v: 0 }
+    gsap.to(o, {
+      v: score, duration: reduceMotion ? 0 : 1.8, delay: 0.3, ease: 'power3.out',
+      onUpdate: () => {
+        out.textContent = String(Math.round(o.v))
+        ring.setAttribute('stroke-dashoffset', String(C - (C * o.v) / 100))
+      },
+    })
+    main.querySelector<HTMLElement>('[data-title]')?.focus({ preventScroll: true })
+    busy = false
+  }, 1400)
+}
+
+await boot('potenziometro')
+renderStep()

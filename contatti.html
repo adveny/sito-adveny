@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="it">
+  <head>
+<!--@head-->
+    <title>Contatti — Adveny</title>
+    <meta name="description" content="Trasformiamo le idee in risultati. Raccontaci il tuo progetto." />
+  </head>
+  <body data-page="contatti">
+<!--@nav-->
+
+    <main>
+      <section class="page-hero" style="min-height: 70vh">
+        <div class="wrap page-hero__inner">
+          <p class="eyebrow" data-split="chars">Contatti</p>
+          <h1 class="display" data-split="words">Trasformiamo le idee in risultati. <span class="iri iri-block">Raccontaci il tuo progetto.</span></h1>
+        </div>
+      </section>
+
+      <section class="section" style="padding-top: 20px">
+        <div class="wrap contact">
+          <div class="contact__info">
+            <div data-reveal>
+              <p class="eyebrow" style="margin-bottom: 12px">Contatti</p>
+              <a href="tel:+393334445555">(+39) 333 444 5555</a>
+              <a href="mailto:info@adveny.com">info@adveny.com</a>
+            </div>
+            <p data-reveal data-delay="0.1">Cagliari | Sardegna</p>
+            <p class="body" data-split="lines">Un consulente ti risponderà entro 48 ore per capire come possiamo aiutarti a crescere.</p>
+          </div>
+
+          <form class="form glass" data-contact data-reveal novalidate>
+            <div class="form__row">
+              <label class="field"><input name="nome" required placeholder=" " autocomplete="name" /><span>Nome e Cognome *</span></label>
+              <label class="field"><input name="mail" type="email" required placeholder=" " autocomplete="email" /><span>Mail *</span></label>
+            </div>
+            <div class="form__row">
+              <label class="field"><input name="ragione" placeholder=" " autocomplete="organization" /><span>Ragione Sociale</span></label>
+              <label class="field field--select">
+                <select name="settore">
+                  <option value="">Scegli un settore</option>
+                  <option>E-commerce e Retail</option>
+                  <option>Ristorazione e Horeca</option>
+                  <option>Servizi B2B e Consulenza</option>
+                  <option>Artigianato e Manifattura</option>
+                  <option>Immobiliare e Costruzioni</option>
+                  <option>Turismo e Ospitalità</option>
+                  <option>Salute e Benessere</option>
+                  <option>Altro</option>
+                </select>
+                <span>Settore</span>
+              </label>
+            </div>
+            <label class="field"><input name="oggetto" required placeholder=" " /><span>Oggetto *</span></label>
+            <label class="field"><textarea name="messaggio" required placeholder=" "></textarea><span>Messaggio *</span></label>
+            <label class="check">
+              <input type="checkbox" name="privacy" required /><i></i>
+              <span>Accetto il trattamento dei dati personali inseriti in questo form al fine di ricevere una risposta, come descritto nella Privacy Policy del sito. *</span>
+            </label>
+            <div class="form__foot">
+              <button class="btn btn--light" type="submit"><span>Invia messaggio</span></button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+
+<!--@footer:nocta-->
+    <script type="module" src="/src/pages/contatti.ts"></script>
+  </body>
+</html>

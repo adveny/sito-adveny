@@ -21,7 +21,17 @@ export const ICONS = {
   target: svg('<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>'),
   chart: svg('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
   user: svg('<circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/>'),
-  // domande
-  question: svg('<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7"/><path d="M12 17h.01"/>'),
+  // domande: una per domanda, accanto al testo
+  layers: svg('<path d="m12 3.5 8.5 4.5-8.5 4.5L3.5 8z"/><path d="m3.5 12 8.5 4.5 8.5-4.5"/><path d="m3.5 16 8.5 4.5 8.5-4.5"/>'),
+  team: svg('<circle cx="12" cy="7.5" r="2.5"/><circle cx="5.5" cy="10" r="2"/><circle cx="18.5" cy="10" r="2"/><path d="M7.5 19a4.5 4.5 0 0 1 9 0"/><path d="M2.5 18a3.5 3.5 0 0 1 4.2-3.4M21.5 18a3.5 3.5 0 0 0-4.2-3.4"/>'),
+  funnel: svg('<path d="M3.5 4.5h17l-6.5 8v6l-4 2v-8z"/>'),
+  heartLoop: svg('<path d="M20.5 12a8.5 8.5 0 1 1-2.5-6"/><path d="M18.5 2.5V6H15"/><path d="M12 16s-3.5-2.1-3.5-4.6a1.9 1.9 0 0 1 3.5-1 1.9 1.9 0 0 1 3.5 1C15.5 13.9 12 16 12 16Z"/>'),
+  toolbox: svg('<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v2"/><path d="M3 13h18"/><path d="M10 13v2h4v-2"/>'),
+  pulse: svg('<path d="M3 12h4l2.5-6 5 12 2.5-6h4"/>'),
+  trend: svg('<path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/>'),
+  star: svg('<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.9z"/>'),
+  flag: svg('<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>'),
+  stairs: svg('<path d="M3 20h5v-5h5v-5h5V5h3"/>'),
+  chat: svg('<path d="M4 5.5h16v10H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>'),
   check: svg('<path d="m5 12.5 4.5 4.5L19 7.5"/>'),
 }

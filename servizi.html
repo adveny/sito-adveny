@@ -32,25 +32,29 @@
               <p class="lead" data-split="lines">Ogni professionista incide significativamente sui costi aziendali.</p>
             </div>
             <div class="roles__grid">
-              <article class="role glass"><h3 class="role__name">Content Creator<br />e Videomaker</h3><p class="role__price">€2.6k-3.5k<small>/ mese</small></p></article>
-              <article class="role glass"><h3 class="role__name">Web Designer<br />e Developer</h3><p class="role__price">€3.2k-4.3k<small>/ mese</small></p></article>
-              <article class="role glass"><h3 class="role__name">Marketing<br />Strategist</h3><p class="role__price">€3.8k-5.4k<small>/ mese</small></p></article>
-              <article class="role glass"><h3 class="role__name">Copywriter e<br />SEO Specialist</h3><p class="role__price">€2.7k-3.8k<small>/ mese</small></p></article>
-              <article class="role glass"><h3 class="role__name">Social Media<br />Manager</h3><p class="role__price">€2.6k-3.5k<small>/ mese</small></p></article>
-              <article class="role glass"><h3 class="role__name">Graphic<br />Designer</h3><p class="role__price">€2.6k-3.7k<small>/ mese</small></p></article>
+              <article class="role glass"><h3 class="role__name">Content Creator<br />e Videomaker</h3><p class="role__price">€1.7k-2.3k<small>/ mese</small></p></article>
+              <article class="role glass"><h3 class="role__name">Web Designer<br />e Developer</h3><p class="role__price">€2.1k-2.8k<small>/ mese</small></p></article>
+              <article class="role glass"><h3 class="role__name">Marketing<br />Strategist</h3><p class="role__price">€2.5k-3.5k<small>/ mese</small></p></article>
+              <article class="role glass"><h3 class="role__name">Copywriter e<br />SEO Specialist</h3><p class="role__price">€1.8k-2.5k<small>/ mese</small></p></article>
+              <article class="role glass"><h3 class="role__name">Social Media<br />Manager</h3><p class="role__price">€1.7k-2.3k<small>/ mese</small></p></article>
+              <article class="role glass"><h3 class="role__name">Graphic<br />Designer</h3><p class="role__price">€1.7k-2.4k<small>/ mese</small></p></article>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="section" id="offerta">
-        <div class="wrap offer">
-          <div class="stack-copy">
-            <h2 class="h2" data-read>Con Adveny avrai tutto questo, <span class="iri iri-block">al costo di un solo dipendente.</span></h2>
-            <p class="lead" data-split="lines">Tutte le figure che servono allo sviluppo dei tuoi progetti, in una struttura più agile e sostenibile, senza i costi fissi di un reparto aziendale</p>
-          </div>
-          <div class="stack-copy">
-            <ul class="offer__chips" data-stagger>
+      <!-- OFFERTA: prima la frase, poi "al costo di un solo dipendente" da solo e in rilievo,
+           poi il sottotesto e infine i servizi. Tutto centrato, guidato dallo scroll -->
+      <section class="offer" id="offerta" data-offer aria-label="Con Adveny avrai tutto questo, al costo di un solo dipendente.">
+        <div class="offer__stage">
+          <div class="offer__inner wrap">
+            <span class="offer__glow" aria-hidden="true" data-offer-glow></span>
+            <h2 class="offer__title">
+              <span class="offer__a" data-offer-a>Con Adveny avrai tutto questo,</span>
+              <span class="offer__b" data-offer-b><span class="iri">al costo di un solo dipendente.</span></span>
+            </h2>
+            <p class="lead offer__lead" data-offer-lead>Tutte le figure che servono allo sviluppo dei tuoi progetti, in una struttura più agile e sostenibile, senza i costi fissi di un reparto aziendale</p>
+            <ul class="offer__chips" data-offer-chips>
               <li class="chip">Brand Design</li>
               <li class="chip">Formazione Aziendale</li>
               <li class="chip">Advertising</li>
@@ -58,7 +62,7 @@
               <li class="chip">Comunicazione &amp; Contenuti</li>
               <li class="chip">Growth Strategy</li>
             </ul>
-            <a class="btn btn--light" href="/contatti.html" data-reveal><span>Diventa partner Adveny</span></a>
+            <div data-offer-cta><a class="btn btn--light" href="/potenziometro.html"><span>Ottieni l'analisi del tuo potenziale</span></a></div>
           </div>
         </div>
       </section>
@@ -113,7 +117,7 @@
       </section>
     </main>
 
-<!--@footer-->
+<!--@footer:analisi-->
     <script type="module" src="/src/pages/servizi.ts"></script>
   </body>
 </html>

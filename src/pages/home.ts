@@ -1,4 +1,4 @@
-import { boot, gsap, ScrollTrigger, SplitText, reduceMotion, getLenis, splitReadable, lightWords } from '../core'
+import { boot, setAuraKeys, getAuraAngle, gsap, ScrollTrigger, SplitText, reduceMotion, getLenis, splitReadable, lightWords } from '../core'
 import { CASES, SECTORS, type Case } from '../data'
 import { ICONS } from '../icons'
 
@@ -16,17 +16,43 @@ const words = Array.from(hero.querySelectorAll<HTMLElement>('[data-word]'))
 const we = hero.querySelector<HTMLElement>('[data-we]')!
 const logo = hero.querySelector<HTMLElement>('[data-logo]')!
 const svg = hero.querySelector<SVGSVGElement>('[data-rings]')!
-const aura = hero.querySelector<HTMLElement>('[data-hero-aura]')!
 const bars = Array.from(hero.querySelectorAll<HTMLElement>('[data-hero-progress] i'))
 const hint = hero.querySelector<HTMLElement>('[data-hero-hint]')!
 
-// anello interno → esterno; ogni anello ha una sola pillola che lo percorre
+// anello interno → esterno; ogni anello ha una sola pillola che lo percorre.
+// Le pillole partono tutte sopra il centro (270° = in alto): così le keyword
+// che arrivano dopo non ci finiscono sopra.
 const RINGS = [
-  { r: 196, dur: 34, dir: 1, start: 20 },
-  { r: 276, dur: 48, dir: -1, start: 150 },
-  { r: 356, dur: 64, dir: 1, start: 262 },
+  { r: 196, dur: 34, dir: 1, start: 232 },
+  { r: 276, dur: 48, dir: -1, start: 302 },
+  { r: 356, dur: 64, dir: 1, start: 264 },
 ]
 const NS = 'http://www.w3.org/2000/svg'
+// gli anelli si colorano come le luci di sfondo: chiari e viola dal lato
+// delle luci, quasi spenti a metà. Il gradiente gira insieme alle luci.
+const ringGrad = document.createElementNS(NS, 'linearGradient')
+ringGrad.id = 'ringgrad'
+ringGrad.setAttribute('x1', '1')
+ringGrad.setAttribute('x2', '0')
+;[
+  [0, '#e2d8ff', 0.42], [0.24, '#9b3dff', 0.34], [0.5, '#ffffff', 0.05], [0.76, '#9b3dff', 0.34], [1, '#e2d8ff', 0.42],
+].forEach(([o, c, a]) => {
+  const st = document.createElementNS(NS, 'stop')
+  st.setAttribute('offset', String(o))
+  st.setAttribute('stop-color', String(c))
+  st.setAttribute('stop-opacity', String(a))
+  ringGrad.append(st)
+})
+const defs = document.createElementNS(NS, 'defs')
+defs.append(ringGrad)
+svg.append(defs)
+let ringDeg = NaN
+const tintRings = () => {
+  const d = Math.round(getAuraAngle() * 4) / 4
+  if (d === ringDeg) return
+  ringDeg = d
+  ringGrad.setAttribute('gradientTransform', `rotate(${d} 0.5 0.5)`)
+}
 RINGS.forEach((ring) => {
   const c = document.createElementNS(NS, 'circle')
   c.setAttribute('class', 'ring__line')
@@ -34,11 +60,6 @@ RINGS.forEach((ring) => {
   c.setAttribute('pathLength', '1')
   svg.append(c)
 })
-const ticks = document.createElementNS(NS, 'circle')
-ticks.setAttribute('class', 'ring__ticks')
-ticks.setAttribute('r', '392')
-ticks.setAttribute('pathLength', '360')
-svg.append(ticks)
 
 // le pillole sono HTML sopra l'svg: girano sul cerchio ma il testo resta dritto
 const ecoEl = hero.querySelector<HTMLElement>('[data-eco]')!
@@ -111,10 +132,10 @@ if (!reduceMotion) {
     // tornando indietro con lo scroll le card rientrano dolcemente al loro posto
     orbitT = heroTl.time() >= ORBIT_FROM ? orbitT + dt / 1000 : orbitT * 0.88
     placePills(orbitT)
+    tintRings()
   })
 }
-heroTl.fromTo(ticks, { opacity: 0 }, { opacity: 1, duration: 1 }, eco + 1.6)
-heroTl.fromTo(aura, { opacity: 0.45, scale: 0.8 }, { opacity: 1, scale: 1, duration: 2, ease: 'none' }, eco)
+tintRings()
 heroTl.to({}, { duration: 1.2 }) // pausa sul frame finale
 
 hero.classList.add('is-ready')
@@ -127,6 +148,20 @@ const syncBars = () => {
 
 // la prima keyword entra da sola al caricamento; lo scroll guida il resto
 const INTRO = 1.2
+
+// luci di sfondo: durante le keyword restano ai bordi e si avvicinano a ogni
+// parola; quando entra il logo si fermano nella composizione del brand
+setAuraKeys(() => {
+  const top = hero.offsetTop
+  const range = hero.offsetHeight - innerHeight
+  const at = (t: number) => top + ((t - INTRO) / (heroEnd - INTRO)) * range
+  return [
+    { at: 0, spread: 1.16, turn: -40 },
+    { at: at(eco + 1.4), spread: 1, turn: 0 },
+    { at: top + range, spread: 1, turn: 4 },
+    { at: top + range + innerHeight, spread: 1.28, turn: 14 },
+  ]
+})
 if (reduceMotion) {
   hero.classList.add('is-static')
   heroTl.progress(1)
@@ -145,10 +180,64 @@ if (reduceMotion) {
     },
   })
 }
+// passando col mouse sulla hero si accende un fascio di luce come quelle di
+// sfondo; sta sotto keyword e logo, che sopra la luce si invertono (difference)
+const stage = hero.querySelector<HTMLElement>('.hero__stage')!
+const lightEl = (cls: string) => {
+  const el = document.createElement('i')
+  el.className = cls
+  el.setAttribute('aria-hidden', 'true')
+  el.append(document.createElement('b'))
+  return el
+}
+const cursorLight = [lightEl('hero__light'), lightEl('hero__tint')]
+stage.prepend(cursorLight[0])
+ecoEl.after(cursorLight[1])
+const setLight = (on: boolean) => cursorLight.forEach((el) => el.classList.toggle('is-on', on))
+if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+  const ease = reduceMotion ? 0.01 : 0.9
+  const xTo = gsap.quickTo(cursorLight, 'x', { duration: ease, ease: 'power3' })
+  const yTo = gsap.quickTo(cursorLight, 'y', { duration: ease, ease: 'power3' })
+  stage.addEventListener('pointerenter', (e) => {
+    // se era spento nasce sotto il puntatore, altrimenti continua a seguirlo
+    if (!cursorLight[0].classList.contains('is-on')) {
+      xTo(e.clientX, e.clientX)
+      yTo(e.clientY, e.clientY)
+    }
+    setLight(true)
+  })
+  stage.addEventListener('pointermove', (e) => {
+    xTo(e.clientX)
+    yTo(e.clientY)
+  })
+  stage.addEventListener('pointerleave', () => setLight(false))
+  // effetto liquido: la luce si allunga nella direzione in cui si muove
+  if (!reduceMotion) {
+    let px = 0, py = 0, stretch = 0, angle = 0
+    gsap.ticker.add(() => {
+      if (!heroVisible) return
+      const x = gsap.getProperty(cursorLight[0], 'x') as number
+      const y = gsap.getProperty(cursorLight[0], 'y') as number
+      const dx = x - px, dy = y - py
+      px = x
+      py = y
+      const speed = Math.hypot(dx, dy)
+      // la forma è simmetrica: basta ruotare di al massimo 90° verso la nuova direzione
+      if (speed > 0.5) {
+        const target = (Math.atan2(dy, dx) * 180) / Math.PI
+        const diff = ((((target - angle) % 180) + 270) % 180) - 90
+        angle += diff * 0.15
+      }
+      stretch += (Math.min(speed / 40, 0.45) - stretch) * 0.12
+      gsap.set(cursorLight, { rotation: angle, scaleX: 1 + stretch, scaleY: 1 - stretch * 0.45 })
+    })
+  }
+}
+
 // gli anelli girano solo quando la hero è visibile
 new IntersectionObserver(([e]) => {
   heroVisible = e.isIntersecting
-  hero.classList.toggle('is-offscreen', !e.isIntersecting)
+  if (!e.isIntersecting) setLight(false)
 }).observe(hero)
 
 // ============================================================
@@ -212,6 +301,7 @@ if (!reduceMotion) {
     const tl = gsap.timeline({ scrollTrigger: { trigger: card, start: 'top 70%', once: true } })
     tl.fromTo(card.querySelector('.method__top'), { '--l': 0 }, { '--l': 1, duration: 1, ease: 'power3.inOut' })
       .from(card.querySelectorAll('.method__num, .method__kicker, .method__steps i'), { opacity: 0, y: 8, duration: 0.6, stagger: 0.06 }, 0.1)
+    tl.from(verb.querySelector('.method__mark'), { opacity: 0, x: -24, duration: 0.9, ease: 'expo.out' }, 0.15)
     if (iri) tl.fromTo(iri, { clipPath: 'inset(-10% 100% -10% 0%)', x: -20 }, { clipPath: 'inset(-10% 0% -10% 0%)', x: 0, duration: 1.2, ease: 'expo.out' }, 0.2)
     else tl.from(chars, { xPercent: -100, opacity: 0, duration: 0.9, stagger: 0.035, ease: 'expo.out' }, 0.2)
     tl.from(card.querySelector('.method__text'), { opacity: 0, y: 16, duration: 1, ease: 'expo.out' }, 0.6)
@@ -232,6 +322,20 @@ if (!reduceMotion) {
 }
 
 // ---------- casi studio: scorrimento orizzontale ----------
+// +3500, +250.000, +37%, +2700€ (separatore delle migliaia all'italiana)
+function fmtMetric(v: number, unit = '') {
+  return `+${Math.round(v).toLocaleString('it-IT')}${unit}`
+}
+// i numeri dei risultati seguono lo scroll: crescono entrando, si fermano
+// sul valore giusto e tornano a scendere se si risale
+function scrubMetrics(card: HTMLElement, trigger: ScrollTrigger.Vars) {
+  if (reduceMotion) return
+  const els = Array.from(card.querySelectorAll<HTMLElement>('[data-metric]'))
+  const p = { v: 0 }
+  const draw = () => els.forEach((el) => (el.textContent = fmtMetric(parseFloat(el.dataset.metric!) * p.v, el.dataset.unit)))
+  draw()
+  gsap.to(p, { v: 1, ease: 'power2.out', onUpdate: draw, scrollTrigger: { ...trigger, scrub: 0.6 } })
+}
 function caseCard(c: Case, i: number) {
   const media = c.video
     ? `<video src="/video/${c.video}.mp4" poster="/video/${c.video}.jpg" muted loop playsinline preload="none"></video>`
@@ -246,7 +350,7 @@ function caseCard(c: Case, i: number) {
       <div class="case__results">
         <p class="eyebrow">Risultati</p>
         <div class="case__metrics">
-          ${c.metrics.map(([v, l]) => `<div class="metric"><div class="metric__v" data-count="${v}" data-prefix="+" data-suffix="%">+${v}%</div><div class="metric__l">${l}</div></div>`).join('')}
+          ${c.metrics.map((m) => `<div class="metric"><div class="metric__v" data-metric="${m.v}" data-unit="${m.unit ?? ''}">${fmtMetric(m.v, m.unit)}</div><div class="metric__l">${m.label}</div></div>`).join('')}
         </div>
       </div>
       <button class="btn btn--glass btn--sm case__more" type="button" data-case-open="${i}"><span>Scopri di più</span></button>
@@ -293,7 +397,12 @@ mm.add('(min-width: 861px) and (prefers-reduced-motion: no-preference)', () => {
     },
   })
   // ogni card si "raddrizza" entrando e le informazioni si compongono in ordine
-  track.querySelectorAll<HTMLElement>('.case').forEach((card) => {
+  track.querySelectorAll<HTMLElement>('.case').forEach((card, i) => {
+    // la prima card è già a schermo quando la sezione si ferma: i suoi numeri
+    // crescono mentre la sezione sale; le altre mentre scorrono da destra
+    scrubMetrics(card, i === 0
+      ? { trigger: casesSection, start: 'top 85%', end: 'top top' }
+      : { trigger: card, containerAnimation: tween, start: 'left right', end: 'left 35%' })
     gsap.from(card.querySelectorAll('.case__name, .case__desc, .case__tags, .case__results, .case__more'), {
       y: 24, opacity: 0, duration: 0.9, stagger: 0.08, ease: 'expo.out',
       scrollTrigger: { trigger: card, containerAnimation: tween, start: 'left 70%', once: true },
@@ -306,6 +415,7 @@ mm.add('(min-width: 861px) and (prefers-reduced-motion: no-preference)', () => {
 })
 mm.add('(max-width: 860px)', () => {
   track.querySelectorAll<HTMLElement>('.case').forEach((card) => {
+    scrubMetrics(card, { trigger: card.querySelector('.case__metrics'), start: 'top 95%', end: 'top 50%' })
     gsap.from(card, { y: 40, opacity: 0, duration: 1.1, ease: 'expo.out', scrollTrigger: { trigger: card, start: 'top 88%', once: true } })
   })
 })
@@ -323,7 +433,7 @@ const openCase = (i: number) => {
     : `<div class="case__placeholder" aria-hidden="true"></div>`
   modalInfo.innerHTML = card.querySelector('.case__info')!.innerHTML.replace(/<button[\s\S]*<\/button>/, '')
   modalInfo.querySelector('.case__name')!.id = 'modal-title'
-  modalInfo.querySelectorAll<HTMLElement>('[data-count]').forEach((el) => (el.textContent = `+${el.dataset.count}%`))
+  modalInfo.querySelectorAll<HTMLElement>('[data-metric]').forEach((el) => (el.textContent = fmtMetric(parseFloat(el.dataset.metric!), el.dataset.unit)))
   lastFocus = document.activeElement as HTMLElement
   modal.classList.add('is-open')
   modal.setAttribute('aria-hidden', 'false')
@@ -349,6 +459,8 @@ addEventListener('keydown', (e) => {
 // ---------- anteprima analisi (step 1) ----------
 function renderSectors() {
   const wrap = document.querySelector<HTMLElement>('[data-sectors]')!
+  // stessa icona della domanda nel potenziometro
+  document.querySelector('.analysis__q')?.insertAdjacentHTML('afterbegin', `<span class="pz__qicon">${ICONS.layers}</span>`)
   wrap.innerHTML = SECTORS.map(
     (s, i) => `<button class="opt" type="button" aria-pressed="false" data-sector="${i}">
       <span class="opt__icon">${ICONS[s.icon]}</span><span class="opt__label">${s.label}</span>

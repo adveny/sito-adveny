@@ -22,6 +22,80 @@ function initScroll() {
   gsap.ticker.lagSmoothing(0)
 }
 
+// ---------- luci di sfondo ----------
+// Le due luci stanno su un'ellisse attorno allo schermo, sempre opposte.
+// Scorrendo girano attorno ai contenuti; la velocità le fa gonfiare un poco.
+// Una pagina può fissare dei punti chiave (scroll in px → apertura, giro):
+// apertura 1 = composizione del brand, valori più alti = luci più ai bordi.
+export type AuraKey = { at: number; spread: number; turn: number }
+let auraKeys: () => AuraKey[] = () => [{ at: 0, spread: 1.28, turn: 0 }]
+let keys: AuraKey[] = []
+let auraDeg = 0
+// direzione (gradi) della luce in alto a sinistra: serve a chi vuole colorarsi come le luci
+export const getAuraAngle = () => auraDeg
+export const setAuraKeys = (fn: () => AuraKey[]) => {
+  auraKeys = fn
+  keys = fn()
+}
+const AURA_TURN = 11 // gradi di giro per ogni schermata scorsa oltre l'ultimo punto chiave
+
+function initAura() {
+  const el = document.querySelector<HTMLElement>('[data-aura]')
+  if (!el) return
+  const blooms = Array.from(el.querySelectorAll<HTMLElement>('.aura__bloom'))
+  keys = auraKeys()
+  let bloomR = blooms[0].offsetHeight / 2
+  // gradi: luce in alto a sinistra, la gemella in basso a destra, seguendo la diagonale dello schermo
+  const baseAngle = () => 180 + (Math.atan2(innerHeight, innerWidth) * 180) / Math.PI * 0.68
+  let base = baseAngle()
+  addEventListener('resize', () => {
+    keys = auraKeys()
+    bloomR = blooms[0].offsetHeight / 2
+    base = baseAngle()
+  })
+  ScrollTrigger.addEventListener('refresh', () => (keys = auraKeys()))
+
+  const sample = (y: number) => {
+    let i = 0
+    while (i < keys.length - 1 && y > keys[i + 1].at) i++
+    const a = keys[i], b = keys[i + 1]
+    if (!b || y <= a.at) {
+      const past = Math.max(0, y - a.at) / innerHeight
+      return { spread: a.spread, turn: a.turn + (b ? 0 : past * AURA_TURN) }
+    }
+    const t = gsap.parseEase('sine.inOut')((y - a.at) / (b.at - a.at))
+    return { spread: a.spread + (b.spread - a.spread) * t, turn: a.turn + (b.turn - a.turn) * t }
+  }
+
+  // entrata: le luci arrivano dai bordi
+  const intro = { k: reduceMotion ? 0 : 1 }
+  if (!reduceMotion) gsap.to(intro, { k: 0, duration: 2.4, delay: 0.15, ease: 'expo.out' })
+  let swell = 0
+  const render = () => {
+    const { spread, turn } = sample(scrollY)
+    const s = spread + intro.k * 0.5
+    const v = lenis ? Math.abs(lenis.velocity) : 0
+    swell += (Math.min(v * 0.005, 0.12) - swell) * 0.06
+    // ogni luce sta appena oltre il bordo dello schermo, lungo la sua direzione:
+    // così la composizione regge sia su desktop sia in verticale
+    const push = bloomR * (0.02 + (s - 1) * 1.5)
+    auraDeg = base + turn
+    blooms.forEach((b, i) => {
+      const deg = base + turn + i * 180
+      const r = (deg * Math.PI) / 180
+      const c = Math.cos(r), sn = Math.sin(r)
+      const edge = Math.min(innerWidth / 2 / Math.max(Math.abs(c), 1e-3), innerHeight / 2 / Math.max(Math.abs(sn), 1e-3))
+      const x = c * (edge + push)
+      const y = sn * (edge + push)
+      b.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${(deg - base - 22).toFixed(2)}deg) scale(${(1 + swell).toFixed(4)})`
+    })
+  }
+  render()
+  requestAnimationFrame(() => el.classList.add('is-on'))
+  if (reduceMotion) addEventListener('scroll', render, { passive: true })
+  else gsap.ticker.add(render)
+}
+
 // ---------- navigazione ----------
 function initNav(page: string) {
   document.querySelectorAll<HTMLAnchorElement>(`a[data-page="${page}"]`).forEach((a) => {
@@ -186,6 +260,7 @@ export async function boot(page: string) {
   initScroll()
   initNav(page)
   initPageTransitions()
+  initAura()
   // aspetta i font prima di dividere i testi, così le righe sono corrette
   await document.fonts.ready
   initTextAnimations()

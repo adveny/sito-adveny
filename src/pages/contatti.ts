@@ -3,6 +3,10 @@ import { boot, gsap } from '../core'
 await boot('contatti')
 
 const form = document.querySelector<HTMLFormElement>('[data-contact]')!
+// arrivo dalla card "Potresti essere tu" del team: è una candidatura
+if (new URLSearchParams(location.search).has('candidatura')) {
+  form.querySelector<HTMLInputElement>('[name="oggetto"]')!.value = 'Candidatura'
+}
 form.addEventListener('submit', (e) => {
   e.preventDefault()
   const invalid = Array.from(form.querySelectorAll<HTMLInputElement>('[required]')).find((i) => !i.checkValidity())

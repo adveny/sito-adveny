@@ -12,30 +12,36 @@ const meter = document.querySelector<HTMLElement>('[data-pz-meter]')!
 const overlay = document.querySelector<HTMLElement>('[data-pz-transition]')!
 
 const answers: Answers = { team: 'Solo io' }
+// 7 step (sezioni); dentro ogni step le domande arrivano una alla volta
 let step = 0
+let qi = 0
 let busy = false
+const TOTAL_Q = STEPS.reduce((n, s) => n + s.questions.length, 0)
 
 // arrivo dalla home con il settore già scelto
 const pre = new URLSearchParams(location.search).get('settore')
 if (pre !== null && STEPS[0].questions[0].type === 'sector') {
   const s = STEPS[0].questions[0].options[Number(pre)]
-  if (s) answers.settore = s.label
+  if (s) {
+    answers.settore = s.label
+    qi = 1 // il settore l'ha già scelto in home: si parte dalla domanda dopo
+  }
 }
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
 const filled = (v: unknown) => (Array.isArray(v) ? v.length > 0 : typeof v === 'string' && v.trim().length > 0)
 
-function isComplete() {
-  return STEPS[step].questions.every((q) => {
-    if (q.type === 'textarea') return !!q.optional || filled(answers[q.key])
-    if (q.type === 'form') return q.fields.every((f) => filled(answers[f.key]))
-    return filled(answers[q.key])
-  })
+const current = () => STEPS[step].questions[qi]
+
+function isComplete(q: Question = current()) {
+  if (q.type === 'textarea') return !!q.optional || filled(answers[q.key])
+  if (q.type === 'form') return q.fields.every((f) => filled(answers[f.key]))
+  return filled(answers[q.key])
 }
 
 function renderQuestion(q: Question) {
   const head = q.label
-    ? `<p class="pz__label" id="q-${q.key}">${ICONS.question}<span>${q.label}</span></p>${q.hint ? `<p class="pz__hint">${q.hint}</p>` : ''}`
+    ? `<p class="pz__label" id="q-${q.key}" tabindex="-1">${q.icon ? `<span class="pz__qicon">${ICONS[q.icon]}</span>` : ''}<span>${q.label}</span></p>${q.hint ? `<p class="pz__hint">${q.hint}</p>` : ''}`
     : ''
   let body = ''
   if (q.type === 'sector') {
@@ -71,8 +77,30 @@ function renderQuestion(q: Question) {
 function renderNav() {
   stepsNav.innerHTML = STEPS.map((s, i) => `<li class="${i < step ? 'is-done' : ''} ${i === step ? 'is-current' : ''}">${ICONS[s.icon]}<span>${s.title}</span></li>`).join('')
   count.textContent = `${step + 1}/${STEPS.length}`
-  bar.style.width = `${((step + 1) / STEPS.length) * 100}%`
+  // la barra avanza a ogni domanda, non solo a ogni step
+  const done = STEPS.slice(0, step).reduce((n, s) => n + s.questions.length, 0) + qi + 1
+  bar.style.width = `${(done / TOTAL_Q) * 100}%`
   meter.setAttribute('aria-valuenow', String(step + 1))
+}
+
+// la parte che cambia a ogni domanda: domanda, contatore e pulsanti
+function cardHTML() {
+  const s = STEPS[step]
+  const n = s.questions.length
+  const first = step === 0 && qi === 0
+  return `
+    ${n > 1 ? `<div class="pz__qcount"><span>Domanda ${qi + 1} di ${n}</span><span class="pz__qdots" aria-hidden="true">${s.questions.map((_, i) => `<i class="${i <= qi ? 'is-on' : ''}"></i>`).join('')}</span></div>` : ''}
+    ${renderQuestion(current())}
+    <div class="pz__actions">
+      ${first ? '' : `<button class="btn btn--glass btn--back" type="button" data-back><span>Indietro</span></button>`}
+      <button class="btn btn--light" type="submit" data-next ${isComplete() ? '' : 'disabled'}><span>${qi === n - 1 ? s.cta ?? 'Prosegui' : 'Avanti'}</span></button>
+    </div>
+    ${step === STEPS.length - 1 ? `<p class="pz__privacy">Questa demo non invia né conserva i tuoi dati. Le informazioni vengono eliminate chiudendo o aggiornando la pagina.</p>` : ''}`
+}
+
+const animateOptions = () => {
+  if (reduceMotion) return
+  gsap.from(main.querySelectorAll('.opt, .slider__labels button, .field'), { y: 10, opacity: 0, duration: 0.6, stagger: 0.02, delay: 0.1, ease: 'expo.out' })
 }
 
 function renderStep(dir = 1) {
@@ -86,14 +114,7 @@ function renderStep(dir = 1) {
         <h1 class="h2" tabindex="-1" data-title>${s.title}</h1>
         <p class="lead">${s.subtitle}</p>
       </div>
-      <div class="pz__card glass">
-        ${s.questions.map(renderQuestion).join('')}
-        <div class="pz__actions">
-          ${step > 0 ? `<button class="btn btn--glass btn--back" type="button" data-back><span>Indietro</span></button>` : ''}
-          <button class="btn btn--light" type="submit" data-next ${isComplete() ? '' : 'disabled'}><span>${s.cta ?? 'Prosegui'}</span></button>
-        </div>
-        ${step === STEPS.length - 1 ? `<p class="pz__privacy">Questa demo non invia né conserva i tuoi dati. Le informazioni vengono eliminate chiudendo o aggiornando la pagina.</p>` : ''}
-      </div>
+      <div class="pz__card glass" data-card>${cardHTML()}</div>
     </form>`
   bind()
   getLenis()?.scrollTo(0, { immediate: true })
@@ -101,9 +122,45 @@ function renderStep(dir = 1) {
     const intro = main.querySelectorAll('.pz__intro > *')
     gsap.from(intro, { x: -24 * dir, opacity: 0, duration: 0.8, stagger: 0.05, ease: 'expo.out' })
     gsap.from(main.querySelector('.pz__card'), { y: 30, opacity: 0, duration: 0.9, ease: 'expo.out' })
-    gsap.from(main.querySelectorAll('.opt, .slider__labels button'), { y: 10, opacity: 0, duration: 0.6, stagger: 0.02, delay: 0.1, ease: 'expo.out' })
+    animateOptions()
   }
   main.querySelector<HTMLElement>('[data-title]')?.focus({ preventScroll: true })
+}
+
+// cambio domanda dentro lo stesso step: scorre solo la card
+function showQuestion(dir: 1 | -1) {
+  const card = main.querySelector<HTMLElement>('[data-card]')!
+  renderNav()
+  const swap = () => {
+    card.innerHTML = cardHTML()
+    card.querySelector<HTMLElement>('.pz__label')?.focus({ preventScroll: true })
+  }
+  if (reduceMotion) return swap()
+  busy = true
+  gsap.to(card.children, {
+    x: -28 * dir, opacity: 0, duration: 0.22, ease: 'power2.in',
+    onComplete: () => {
+      swap()
+      gsap.fromTo(card.children, { x: 28 * dir, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, stagger: 0.04, ease: 'expo.out', onComplete: () => void (busy = false) })
+      animateOptions()
+    },
+  })
+}
+
+// avanti: prossima domanda dello step, oppure step successivo
+function advance() {
+  if (busy || !isComplete()) return
+  if (qi < STEPS[step].questions.length - 1) {
+    qi++
+    showQuestion(1)
+  } else go(1)
+}
+function back() {
+  if (busy) return
+  if (qi > 0) {
+    qi--
+    showQuestion(-1)
+  } else if (step > 0) go(-1)
 }
 
 function refreshNext() {
@@ -122,6 +179,9 @@ function bind() {
       if (mode === 'single') {
         answers[key] = value
         form.querySelectorAll<HTMLButtonElement>(`.opt[data-key="${key}"]`).forEach((b) => b.setAttribute('aria-pressed', String(b === opt)))
+        // una sola risposta possibile: appena scelta si passa alla domanda dopo
+        const q = current()
+        setTimeout(() => current() === q && answers[key] === value && advance(), 420)
       } else {
         const cur = new Set(Array.isArray(answers[key]) ? (answers[key] as string[]) : [])
         cur.has(value) ? cur.delete(value) : cur.add(value)
@@ -134,20 +194,19 @@ function bind() {
           })
         }
       }
-            refreshNext()
+      refreshNext()
       return
     }
     const slide = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-slide]')
     if (slide) setSlider(slide.closest<HTMLElement>('[data-slider]')!, Number(slide.dataset.slide))
-    if ((e.target as HTMLElement).closest('[data-back]')) go(-1)
+    if ((e.target as HTMLElement).closest('[data-back]')) back()
   })
 
-  form.querySelectorAll<HTMLElement>('[data-slider]').forEach((wrap) => {
-    wrap.querySelector('input')!.addEventListener('input', (e) => setSlider(wrap, Number((e.target as HTMLInputElement).value)))
-  })
-
+  // delegato al form: la card cambia contenuto a ogni domanda
   form.addEventListener('input', (e) => {
     const t = e.target as HTMLInputElement
+    const slider = t.closest<HTMLElement>('[data-slider]')
+    if (slider && t.type === 'range') return setSlider(slider, Number(t.value))
     if (t.dataset.text) {
       answers[t.dataset.text] = t.value
       refreshNext()
@@ -163,14 +222,14 @@ function bind() {
       gsap.fromTo(email, { x: -8 }, { x: 0, duration: 0.6, ease: 'elastic.out(1, 0.3)' })
       return
     }
-    go(1)
+    advance()
   })
 }
 
 function setSlider(wrap: HTMLElement, i: number) {
   const key = wrap.dataset.slider!
-  const q = STEPS[step].questions.find((x) => x.key === key)!
-  if (q.type !== 'slider') return
+  const q = current()
+  if (q.type !== 'slider' || q.key !== key) return
   answers[key] = q.options[i]
   const input = wrap.querySelector('input')!
   input.value = String(i)
@@ -186,6 +245,8 @@ function go(dir: 1 | -1) {
   const msg = dir === 1 ? leaving.transition : null
   const swap = () => {
     step += dir
+    // tornando indietro si riapre l'ultima domanda dello step precedente
+    qi = dir === 1 ? 0 : STEPS[step].questions.length - 1
     renderStep(dir)
   }
   if (!msg || reduceMotion) return swap()

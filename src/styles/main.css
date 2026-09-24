@@ -793,3 +793,34 @@ em { font-style: normal; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
+
+/* ---------- accent per pagina ----------
+   Home, contatti e potenziometro restano viola (:root). About in verde,
+   servizi in blu: stessi gradienti di :root, stessa luminosità per ogni
+   tono, cambia solo la tinta. */
+body[data-page='about'] {
+  --accent: #00c46c;
+  --lavender: #8fe8bd;
+  --accent-rgb: 0 196 108;
+  --lavender-rgb: 143 232 189;
+  --aura: linear-gradient(100deg, #2bd98b 0%, #7fe9b6 45%, #d2f7e5 100%);
+  --bloom: radial-gradient(closest-side,
+    #e3eae6 0%, #d5e4dc 18%, #b2e4c9 30%, #86deb0 40%, #48e694 48%, #0cea78 55%,
+    #00b05a 61%, rgba(0, 100, 50, 0.72) 67%, rgba(0, 58, 29, 0.45) 76%, rgba(0, 30, 15, 0.2) 87%, transparent 100%);
+}
+body[data-page='servizi'] {
+  --accent: #0a62ff;
+  --lavender: #96b8ff;
+  --accent-rgb: 10 98 255;
+  --lavender-rgb: 150 184 255;
+  --aura: linear-gradient(100deg, #4a8cff 0%, #8db4ff 45%, #d2e2ff 100%);
+  --bloom: radial-gradient(closest-side,
+    #e3e6ea 0%, #d5dce4 18%, #b2c6e4 30%, #86a6de 40%, #4883e6 48%, #0c5cea 55%,
+    #0044b0 61%, rgba(0, 38, 100, 0.72) 67%, rgba(0, 22, 58, 0.45) 76%, rgba(0, 11, 30, 0.2) 87%, transparent 100%);
+}
+/* i viola scritti a mano nelle sezioni di queste due pagine */
+body[data-page='about'] .member:hover,
+body[data-page='about'] .member--open { border-color: rgb(var(--lavender-rgb) / 0.35); }
+body[data-page='about'] .union__beam--a::before { background: radial-gradient(closest-side, #b8ffd9 0%, #94f5c2 20%, #5cf0a2 38%, #12e87c 54%, rgb(0 184 92 / 0.55) 70%, transparent 100%); }
+body[data-page='about'] .union__beam--b::before { background: radial-gradient(closest-side, #b8fff4 0%, #96ffe9 22%, #70ffd9 40%, #3cf0c0 56%, rgb(36 200 150 / 0.5) 72%, transparent 100%); }
+body[data-page='servizi'] .offer__glow { background: radial-gradient(closest-side, rgb(var(--accent-rgb) / 0.4), rgb(var(--accent-rgb) / 0.12) 60%, transparent); }

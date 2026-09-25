@@ -34,4 +34,6 @@ export const ICONS = {
   stairs: svg('<path d="M3 20h5v-5h5v-5h5V5h3"/>'),
   chat: svg('<path d="M4 5.5h16v10H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>'),
   check: svg('<path d="m5 12.5 4.5 4.5L19 7.5"/>'),
+  mail: svg('<rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m3.5 7 8.5 6.5L20.5 7"/>'),
+  calendar: svg('<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9.5 15 1.8 1.8 3.4-3.6"/>'),
 }

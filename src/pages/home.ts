@@ -8,8 +8,8 @@ renderSectors()
 await boot('home')
 
 // ============================================================
-// HERO — tre keyword, poi l'ecosistema Adveny: il logo originale
-// al centro e tre anelli concentrici, uno per keyword, che girano.
+// HERO — quattro keyword, poi l'ecosistema Adveny: il logo originale
+// al centro e tre anelli concentrici che girano, con le keyword come card.
 // ============================================================
 const hero = document.querySelector<HTMLElement>('[data-hero]')!
 const words = Array.from(hero.querySelectorAll<HTMLElement>('[data-word]'))
@@ -19,13 +19,24 @@ const svg = hero.querySelector<SVGSVGElement>('[data-rings]')!
 const bars = Array.from(hero.querySelectorAll<HTMLElement>('[data-hero-progress] i'))
 const hint = hero.querySelector<HTMLElement>('[data-hero-hint]')!
 
-// anello interno → esterno; ogni anello ha una sola pillola che lo percorre.
-// Le pillole partono tutte sopra il centro (270° = in alto): così le keyword
-// che arrivano dopo non ci finiscono sopra.
+// anello interno → esterno
 const RINGS = [
-  { r: 196, dur: 34, dir: 1, start: 232 },
-  { r: 276, dur: 48, dir: -1, start: 302 },
-  { r: 356, dur: 64, dir: 1, start: 264 },
+  { r: 196, dur: 34, dir: 1 },
+  { r: 276, dur: 48, dir: -1 },
+  { r: 356, dur: 64, dir: 1 },
+]
+// una pillola per keyword, nell'ordine delle keyword. Le prime partono sopra
+// il centro (270° = in alto): così le keyword che arrivano dopo non ci finiscono
+// sopra. L'ultima divide l'anello di mezzo con la seconda, dal lato opposto.
+// phone: anello e angolo sul telefono, dove le card girano insieme (vedi RIGID).
+// Lì l'anello interno resta libero (le card coprivano il logo) e le card stanno a
+// coppie opposte sugli altri due: calcolate per restare staccate tra loro e dal
+// logo per tutto il giro, da 375px di larghezza in su
+const PILLS = [
+  { ring: 0, start: 232, phone: { ring: 2, start: 75 } },
+  { ring: 1, start: 302, phone: { ring: 1, start: 30 } },
+  { ring: 2, start: 264, phone: { ring: 2, start: 255 } },
+  { ring: 1, start: 122, phone: { ring: 1, start: 210 } },
 ]
 const NS = 'http://www.w3.org/2000/svg'
 // gli anelli si colorano come le luci di sfondo: chiari e viola dal lato
@@ -65,13 +76,27 @@ RINGS.forEach((ring) => {
 const ecoEl = hero.querySelector<HTMLElement>('[data-eco]')!
 const pills = Array.from(hero.querySelectorAll<HTMLElement>('[data-pill]'))
 let heroVisible = true
+// su telefono l'ecosistema è stretto e le card, a velocità diverse, finivano una
+// sopra l'altra: lì girano tutte insieme (stessa velocità e verso), come un disco
+const phone = matchMedia('(max-width: 600px)')
+const RIGID = { dur: 48, dir: 1 }
+const startOf = (i: number) => (phone.matches ? PILLS[i].phone.start : PILLS[i].start)
+const ringOf = (i: number) => RINGS[phone.matches ? PILLS[i].phone.ring : PILLS[i].ring]
 const placePills = (time: number) => {
   const half = ecoEl.clientWidth / 2
   const k = half / 400 // da unità del viewBox a pixel
+  // margine dal bordo dello schermo: le card dell'anello esterno non escono ai lati
+  const room = innerWidth / 2 - 10
   pills.forEach((pill, i) => {
-    const ring = RINGS[i]
-    const a = ((ring.start + (ring.dir * 360 * time) / ring.dur) * Math.PI) / 180
-    pill.style.transform = `translate(-50%, -50%) translate(${(Math.cos(a) * ring.r * k).toFixed(1)}px, ${(Math.sin(a) * ring.r * k).toFixed(1)}px)`
+    const ring = ringOf(i)
+    const spin = phone.matches ? RIGID : ring
+    const a = ((startOf(i) + (spin.dir * 360 * time) / spin.dur) * Math.PI) / 180
+    let x = Math.cos(a) * ring.r * k
+    if (phone.matches) {
+      const lim = Math.max(0, room - pill.offsetWidth / 2)
+      x = Math.max(-lim, Math.min(lim, x))
+    }
+    pill.style.transform = `translate(-50%, -50%) translate(${x.toFixed(1)}px, ${(Math.sin(a) * ring.r * k).toFixed(1)}px)`
   })
 }
 // le pillole restano ferme finché non arrivano gli anelli, poi iniziano a girare
@@ -85,13 +110,14 @@ const weSplit = SplitText.create(we, { type: 'chars', mask: 'chars' })
 // dove deve atterrare la keyword i per diventare la sua pillola (rispetto al centro)
 const landing = (i: number) => {
   const k = ecoEl.clientWidth / 2 / 400
-  const a = (RINGS[i].start * Math.PI) / 180
+  const a = (startOf(i) * Math.PI) / 180
+  const r = ringOf(i).r
   const word = words[i]
   const pad = parseFloat(getComputedStyle(word).paddingLeft) * 2
   const pill = pills[i].firstElementChild as HTMLElement
   return {
-    x: Math.cos(a) * RINGS[i].r * k,
-    y: Math.sin(a) * RINGS[i].r * k,
+    x: Math.cos(a) * r * k,
+    y: Math.sin(a) * r * k,
     scale: (pill.offsetWidth - parseFloat(getComputedStyle(pill).paddingLeft) * 2) / Math.max(1, word.offsetWidth - pad),
   }
 }
@@ -112,7 +138,7 @@ wordSplits.forEach((s, i) => {
   heroTl.to(words[i], { opacity: 0, duration: 0.3, ease: 'none' }, at + 2.8)
   heroTl.fromTo(pill, { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.45, immediateRender: false }, at + 2.75)
 })
-const eco = 3 * STEP
+const eco = words.length * STEP
 heroTl.fromTo(weSplit.chars, { yPercent: 115 }, { yPercent: 0, duration: 0.8, stagger: { amount: 0.2 } }, eco)
 // il logo entra con una maschera: nel frame finale resta identico all'originale
 heroTl.fromTo(logo, { clipPath: 'inset(100% 0% 0% 0%)', y: 24 }, { clipPath: 'inset(0% 0% 0% 0%)', y: 0, duration: 1.1 }, eco + 0.2)
@@ -142,7 +168,7 @@ hero.classList.add('is-ready')
 const heroEnd = heroTl.duration()
 const syncBars = () => {
   const t = heroTl.time()
-  bars.forEach((b, i) => b.style.setProperty('--p', String(Math.min(1, Math.max(0, (t - i * STEP) / (i < 3 ? 2.1 : 2))))))
+  bars.forEach((b, i) => b.style.setProperty('--p', String(Math.min(1, Math.max(0, (t - i * STEP) / (i < words.length ? 2.1 : 2))))))
   hint.style.opacity = t > INTRO + 0.2 ? '0' : '1'
 }
 

@@ -4,15 +4,15 @@ import { boot, gsap, SplitText, reduceMotion } from '../core'
 // TEAM — avatar in linea bianca: un busto con attorno curve di livello
 // (come la mappa). L'ultima card è il posto "da sbloccare": candidature.
 // ============================================================
-// photo: avatar futuristico generato con Higgsfield (fondo nero), altrimenti il busto disegnato
+// photo: avatar illustrato generato con Higgsfield (linee bianche su trasparente), altrimenti il busto disegnato
 const TEAM: { name: string; role: string; photo?: string }[] = [
   { name: 'Francesco Berutti', role: 'Growth Manager e Digital Strategist', photo: '/img/team/francesco-berutti.webp' },
   { name: 'Michele Pirro', role: 'Copywriter e Business Consultant', photo: '/img/team/michele-pirro.webp' },
-  { name: 'Simone Concu', role: 'Media Buyer e ADV Specialist' },
-  { name: 'Matteo Sanna', role: 'Art Director e Graphic Designer' },
-  { name: 'Matteo Pastorino', role: 'Fullstack Developer e Software Engineer' },
-  { name: 'Andrea Loddo', role: 'UX/UI Designer e Graphic Designer' },
-  { name: 'Federico Angioni', role: 'Video Director e Videomaker' },
+  { name: 'Simone Concu', role: 'Media Buyer e ADV Specialist', photo: '/img/team/simone-concu.webp' },
+  { name: 'Matteo Sanna', role: 'Art Director e Graphic Designer', photo: '/img/team/matteo-sanna.webp' },
+  { name: 'Matteo Pastorino', role: 'Fullstack Developer e Software Engineer', photo: '/img/team/matteo-pastorino.webp' },
+  { name: 'Andrea Loddo', role: 'UX/UI Designer e Graphic Designer', photo: '/img/team/andrea-loddo.webp' },
+  { name: 'Federico Angioni', role: 'Video Director e Videomaker', photo: '/img/team/federico-angioni.webp' },
 ]
 // busto: spalle, collo e testa in un solo tratto (viewBox 200×250)
 const BUST = 'M28 250C32 214 58 197 84 191L86 173C70 163 62 143 62 118C62 86 78 60 100 60C122 60 138 86 138 118C138 143 130 163 114 173L116 191C142 197 168 214 172 250'
@@ -35,7 +35,7 @@ const avatar = (i: number, open = false) => {
         <g class="avatar__scan" clip-path="url(#bust-${i})">${SCAN}</g>
         <path class="avatar__bust" d="${BUST}" pathLength="1" />
       </svg>
-      ${photo ? `<img class="avatar__photo" src="${photo}" alt="" loading="lazy" width="900" height="1125" />` : ''}
+      ${photo ? `<img class="avatar__photo" src="${photo}" alt="Ritratto illustrato di ${TEAM[i].name}, ${TEAM[i].role} di Adveny" loading="lazy" width="720" height="900" />` : ''}
       <span class="avatar__num">${open ? '+1' : `${String(i + 1).padStart(2, '0')}<small>/${String(TEAM.length).padStart(2, '0')}</small>`}</span>
     </div>`
 }

@@ -3,6 +3,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SplitText } from 'gsap/SplitText'
 import Lenis from 'lenis'
+import { initLegal } from './legal'
 
 gsap.registerPlugin(ScrollTrigger, SplitText)
 
@@ -261,6 +262,7 @@ export async function boot(page: string) {
   initNav(page)
   initPageTransitions()
   initAura()
+  initLegal()
   // aspetta i font prima di dividere i testi, così le righe sono corrette
   await document.fonts.ready
   initTextAnimations()

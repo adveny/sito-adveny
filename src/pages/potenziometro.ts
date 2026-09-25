@@ -35,7 +35,7 @@ const current = () => STEPS[step].questions[qi]
 
 function isComplete(q: Question = current()) {
   if (q.type === 'textarea') return !!q.optional || filled(answers[q.key])
-  if (q.type === 'form') return q.fields.every((f) => filled(answers[f.key]))
+  if (q.type === 'form') return q.fields.every((f) => filled(answers[f.key])) && answers.privacy === 'sì'
   return filled(answers[q.key])
 }
 
@@ -69,7 +69,11 @@ function renderQuestion(q: Question) {
   } else if (q.type === 'form') {
     body = `<div class="form__row">${q.fields.map((f) => `
       <label class="field"><input data-text="${f.key}" type="${f.type}" autocomplete="${f.autoComplete}" required placeholder=" "
-        maxlength="${f.type === 'email' ? 254 : f.type === 'tel' ? 30 : 120}" value="${esc(String(answers[f.key] ?? ''))}" /><span>${f.placeholder}</span></label>`).join('')}</div>`
+        maxlength="${f.type === 'email' ? 254 : f.type === 'tel' ? 30 : 120}" value="${esc(String(answers[f.key] ?? ''))}" /><span>${f.placeholder}</span></label>`).join('')}</div>
+      <label class="check pz__check">
+        <input type="checkbox" data-privacy required ${answers.privacy === 'sì' ? 'checked' : ''} /><i></i>
+        <span>Ho letto l’<button type="button" class="legal__link" data-legal="privacy">informativa privacy</button> e acconsento al trattamento dei miei dati per ricevere il recap via email ed essere ricontattato da un consulente. *</span>
+      </label>`
   }
   return `<div class="pz__q">${head}${body}</div>`
 }
@@ -95,7 +99,7 @@ function cardHTML() {
       ${first ? '' : `<button class="btn btn--glass btn--back" type="button" data-back><span>Indietro</span></button>`}
       <button class="btn btn--light" type="submit" data-next ${isComplete() ? '' : 'disabled'}><span>${qi === n - 1 ? s.cta ?? 'Prosegui' : 'Avanti'}</span></button>
     </div>
-    ${step === STEPS.length - 1 ? `<p class="pz__privacy">Questa demo non invia né conserva i tuoi dati. Le informazioni vengono eliminate chiudendo o aggiornando la pagina.</p>` : ''}`
+`
 }
 
 const animateOptions = () => {
@@ -211,6 +215,10 @@ function bind() {
       answers[t.dataset.text] = t.value
       refreshNext()
     }
+    if (t.hasAttribute('data-privacy')) {
+      answers.privacy = t.checked ? 'sì' : ''
+      refreshNext()
+    }
   })
 
   form.addEventListener('submit', (e) => {
@@ -289,8 +297,17 @@ function showResult() {
         </div>
         <h1 class="h2" tabindex="-1" data-title>Il tuo potenziale di <span class="iri">crescita</span></h1>
         <p class="lead" style="max-width: 52ch">Abbiamo analizzato la tua attività su 6 aree chiave: acquisizione, fidelizzazione, strumenti, metodo, strategia e visione.</p>
-        <p class="pz__demo">Questo è un risultato dimostrativo: il punteggio viene generato casualmente e nessun dato è stato inviato o salvato.</p>
-        <a class="btn btn--light" href="/#casi"><span>Scopri i casi studio</span></a>
+        <ol class="pz__next">
+          <li>
+            <span class="pz__next-icon">${ICONS.mail}</span>
+            <div><strong>Controlla la tua casella</strong><p>Ti abbiamo appena inviato via mail il recap completo della tua analisi.</p></div>
+          </li>
+          <li>
+            <span class="pz__next-icon">${ICONS.calendar}</span>
+            <div><strong>Ti chiamiamo entro 48 ore</strong><p>Un nostro consulente ti contatterà per fissare un incontro e completare insieme l’analisi.</p></div>
+          </li>
+        </ol>
+        <p class="pz__outro">Il primo passo l’hai fatto. <span class="iri">Al resto pensiamo noi.</span></p>
       </section>`
     gsap.to(main, { opacity: 1, filter: 'blur(0px)', duration: 0.5 })
     gsap.from(main.querySelector('.pz__result'), { y: 60, scale: 0.95, opacity: 0, duration: 1.2, ease: 'expo.out' })
@@ -311,3 +328,5 @@ function showResult() {
 
 await boot('potenziometro')
 renderStep()
+// anteprima: ?risultato apre subito la schermata finale
+if (new URLSearchParams(location.search).has('risultato')) showResult()

@@ -1,6 +1,7 @@
 import { defineConfig, type Plugin } from 'vite'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { seoTags } from './seo'
 
 // Inserisce header e footer condivisi al posto di <!--@nav--> e <!--@footer-->
 // (<!--@footer:nocta--> senza CTA, <!--@footer:analisi--> con la CTA al potenziometro)
@@ -8,9 +9,12 @@ function partials(): Plugin {
   const read = (n: string) => readFileSync(resolve(import.meta.dirname, 'src/partials', n), 'utf8')
   return {
     name: 'adveny-partials',
-    transformIndexHtml(html) {
+    transformIndexHtml(html, ctx) {
+      // tag SEO (canonical, anteprime social, dati strutturati) dal titolo e dalla descrizione della pagina
+      const title = html.match(/<title>(.*?)<\/title>/)?.[1] ?? 'Adveny'
+      const description = html.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? ''
       return html
-        .replace('<!--@head-->', read('head.html'))
+        .replace('<!--@head-->', read('head.html') + seoTags(ctx.path, title, description))
         .replace('<!--@nav-->', read('nav.html'))
         .replace(/<!--@footer(?::(\w+))?-->/, (_m, variant) => {
           let footer = read('footer.html').replace('data-variant=""', `data-variant="${variant ?? ''}"`)

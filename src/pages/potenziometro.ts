@@ -271,59 +271,76 @@ function go(dir: 1 | -1) {
   }, 1100)
 }
 
-function showResult() {
+async function showResult() {
   busy = true
   const p = overlay.querySelector('p')!
   p.textContent = 'Analisi in corso...'
   overlay.classList.add('is-on')
   gsap.to(main, { opacity: 0, filter: 'blur(12px)', duration: 0.35 })
-  setTimeout(() => {
-    overlay.classList.remove('is-on')
-    step = STEPS.length - 1
-    stepsNav.querySelectorAll('li').forEach((li) => { li.classList.remove('is-current'); li.classList.add('is-done') })
-    bar.style.width = '100%'
-    // demo: punteggio casuale, come sul sito attuale
-    const score = 58 + Math.floor(Math.random() * 35)
-    const C = 2 * Math.PI * 85
-    main.innerHTML = `
-      <section class="pz__result glass">
-        <p class="eyebrow">${ICONS.check.replace('<svg', '<svg width="16" height="16" style="stroke:#fff;fill:none;stroke-width:2"')} Analisi completata</p>
-        <div class="score">
-          <svg viewBox="0 0 190 190" aria-hidden="true">
-            <circle class="track" cx="95" cy="95" r="85" />
-            <circle class="value" cx="95" cy="95" r="85" stroke-dasharray="${C}" stroke-dashoffset="${C}" data-ring />
-          </svg>
-          <strong><span data-score>0</span><small>%</small></strong>
-        </div>
-        <h1 class="h2" tabindex="-1" data-title>Il tuo potenziale di <span class="iri">crescita</span></h1>
-        <p class="lead" style="max-width: 52ch">Abbiamo analizzato la tua attività su 6 aree chiave: acquisizione, fidelizzazione, strumenti, metodo, strategia e visione.</p>
-        <ol class="pz__next">
-          <li>
-            <span class="pz__next-icon">${ICONS.mail}</span>
-            <div><strong>Controlla la tua casella</strong><p>Ti abbiamo appena inviato via mail il recap completo della tua analisi.</p></div>
-          </li>
-          <li>
-            <span class="pz__next-icon">${ICONS.calendar}</span>
-            <div><strong>Ti chiamiamo entro 48 ore</strong><p>Un nostro consulente ti contatterà per fissare un incontro e completare insieme l’analisi.</p></div>
-          </li>
-        </ol>
-        <p class="pz__outro">Il primo passo l’hai fatto. <span class="iri">Al resto pensiamo noi.</span></p>
-      </section>`
-    gsap.to(main, { opacity: 1, filter: 'blur(0px)', duration: 0.5 })
-    gsap.from(main.querySelector('.pz__result'), { y: 60, scale: 0.95, opacity: 0, duration: 1.2, ease: 'expo.out' })
-    const ring = main.querySelector<SVGCircleElement>('[data-ring]')!
-    const out = main.querySelector<HTMLElement>('[data-score]')!
-    const o = { v: 0 }
-    gsap.to(o, {
-      v: score, duration: reduceMotion ? 0 : 1.8, delay: 0.3, ease: 'power3.out',
-      onUpdate: () => {
-        out.textContent = String(Math.round(o.v))
-        ring.setAttribute('stroke-dashoffset', String(C - (C * o.v) / 100))
-      },
-    })
-    main.querySelector<HTMLElement>('[data-title]')?.focus({ preventScroll: true })
-    busy = false
-  }, 1400)
+
+  const apiUrl =
+    (import.meta.env.VITE_POTENZIOMETRO_API_URL as string) ||
+    'https://adveny-potenziometro-brevo.adveny.workers.dev'
+  const sendPromise = apiUrl
+    ? fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(answers),
+      }).catch((err) => {
+        console.error('Errore invio dati potenziometro:', err)
+      })
+    : Promise.resolve()
+
+  // Attende sia l'animazione di transizione sia l'invio (con timeout di salvaguardia a 4s)
+  const minTime = new Promise((resolve) => setTimeout(resolve, 1400))
+  const maxTimeout = new Promise((resolve) => setTimeout(resolve, 4000))
+  await Promise.all([minTime, Promise.race([sendPromise, maxTimeout])])
+
+  overlay.classList.remove('is-on')
+  step = STEPS.length - 1
+  stepsNav.querySelectorAll('li').forEach((li) => { li.classList.remove('is-current'); li.classList.add('is-done') })
+  bar.style.width = '100%'
+  // demo: punteggio casuale, come sul sito attuale
+  const score = 58 + Math.floor(Math.random() * 35)
+  const C = 2 * Math.PI * 85
+  main.innerHTML = `
+    <section class="pz__result glass">
+      <p class="eyebrow">${ICONS.check.replace('<svg', '<svg width="16" height="16" style="stroke:#fff;fill:none;stroke-width:2"')} Analisi completata</p>
+      <div class="score">
+        <svg viewBox="0 0 190 190" aria-hidden="true">
+          <circle class="track" cx="95" cy="95" r="85" />
+          <circle class="value" cx="95" cy="95" r="85" stroke-dasharray="${C}" stroke-dashoffset="${C}" data-ring />
+        </svg>
+        <strong><span data-score>0</span><small>%</small></strong>
+      </div>
+      <h1 class="h2" tabindex="-1" data-title>Il tuo potenziale di <span class="iri">crescita</span></h1>
+      <p class="lead" style="max-width: 52ch">Abbiamo analizzato la tua attività su 6 aree chiave: acquisizione, fidelizzazione, strumenti, metodo, strategia e visione.</p>
+      <ol class="pz__next">
+        <li>
+          <span class="pz__next-icon">${ICONS.mail}</span>
+          <div><strong>Controlla la tua casella</strong><p>Ti abbiamo appena inviato via mail il recap completo della tua analisi.</p></div>
+        </li>
+        <li>
+          <span class="pz__next-icon">${ICONS.calendar}</span>
+          <div><strong>Ti chiamiamo entro 48 ore</strong><p>Un nostro consulente ti contatterà per fissare un incontro e completare insieme l’analisi.</p></div>
+        </li>
+      </ol>
+      <p class="pz__outro">Il primo passo l’hai fatto. <span class="iri">Al resto pensiamo noi.</span></p>
+    </section>`
+  gsap.to(main, { opacity: 1, filter: 'blur(0px)', duration: 0.5 })
+  gsap.from(main.querySelector('.pz__result'), { y: 60, scale: 0.95, opacity: 0, duration: 1.2, ease: 'expo.out' })
+  const ring = main.querySelector<SVGCircleElement>('[data-ring]')!
+  const out = main.querySelector<HTMLElement>('[data-score]')!
+  const o = { v: 0 }
+  gsap.to(o, {
+    v: score, duration: reduceMotion ? 0 : 1.8, delay: 0.3, ease: 'power3.out',
+    onUpdate: () => {
+      out.textContent = String(Math.round(o.v))
+      ring.setAttribute('stroke-dashoffset', String(C - (C * o.v) / 100))
+    },
+  })
+  main.querySelector<HTMLElement>('[data-title]')?.focus({ preventScroll: true })
+  busy = false
 }
 
 await boot('potenziometro')

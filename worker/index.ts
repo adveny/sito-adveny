@@ -442,6 +442,28 @@ export default {
     }
 
     if (request.method === 'GET') {
+      const url = new URL(request.url)
+      if (url.searchParams.get('init') === '1') {
+        const createRes = await fetch('https://api.brevo.com/v3/contacts/attributes/normal/TELEFONO', {
+          method: 'POST',
+          headers: { 'accept': 'application/json', 'api-key': env.BREVO_API_KEY, 'content-type': 'application/json' },
+          body: JSON.stringify({ type: 'text' }),
+        })
+        return new Response(await createRes.text(), {
+          status: createRes.status,
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        })
+      }
+      const checkEmail = url.searchParams.get('email')
+      if (checkEmail) {
+        const contactRes = await fetch(`https://api.brevo.com/v3/contacts/${encodeURIComponent(checkEmail)}`, {
+          headers: { 'accept': 'application/json', 'api-key': env.BREVO_API_KEY },
+        })
+        return new Response(await contactRes.text(), {
+          status: contactRes.status,
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        })
+      }
       return new Response(JSON.stringify({ status: 'ok', service: 'adveny-potenziometro-brevo' }), {
         status: 200,
         headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
@@ -494,15 +516,13 @@ export default {
         NOME: firstName,
         COGNOME: lastName,
         AZIENDA: payload.azienda ? payload.azienda.trim() : '',
+        TELEFONO: payload.telefono ? payload.telefono.trim() : '',
         SCORE: score,
         FASCIA: fascia.titolo,
         DATA_CONSENSO: payload.timestamp || now.toISOString(),
       }
       if (cleanSms) {
         attributes.SMS = cleanSms
-      }
-      if (payload.telefono) {
-        attributes.LANDLINE_NUMBER = payload.telefono.trim()
       }
 
       const contactBody: Record<string, unknown> = {
@@ -518,6 +538,8 @@ export default {
         }
       }
 
+      let cResStatus = 0
+      let cResError = ''
       try {
         const cRes = await fetch('https://api.brevo.com/v3/contacts', {
           method: 'POST',
@@ -528,27 +550,49 @@ export default {
           },
           body: JSON.stringify(contactBody),
         })
+        cResStatus = cRes.status
 
         if (!cRes.ok && cRes.status !== 201 && cRes.status !== 204) {
-          const errText = await cRes.text()
-          console.warn('Brevo contact warning:', cRes.status, errText)
-          // Fallback resiliente: salva comunque il contatto e lo associa alla lista
-          await fetch('https://api.brevo.com/v3/contacts', {
+          cResError = await cRes.text()
+          console.warn('Brevo contact warning:', cRes.status, cResError)
+
+          // Se Brevo rifiuta per duplicato SMS, riproviamo salvando tutti gli altri campi (AZIENDA, TELEFONO, SCORE, FASCIA...)
+          delete attributes.SMS
+          delete attributes.LANDLINE_NUMBER
+
+          const retryRes = await fetch('https://api.brevo.com/v3/contacts', {
             method: 'POST',
             headers: {
               'accept': 'application/json',
               'api-key': env.BREVO_API_KEY,
               'content-type': 'application/json',
             },
-            body: JSON.stringify({
-              email: payload.email.trim(),
-              updateEnabled: true,
-              listIds: env.BREVO_LIST_ID ? [parseInt(env.BREVO_LIST_ID, 10)] : undefined,
-              attributes: { NOME: firstName, COGNOME: lastName },
-            }),
+            body: JSON.stringify(contactBody),
           })
+          cResStatus = retryRes.status
+          if (!retryRes.ok && retryRes.status !== 201 && retryRes.status !== 204) {
+            cResError = await retryRes.text()
+            // Fallback resiliente: salva comunque il contatto con nome e cognome
+            await fetch('https://api.brevo.com/v3/contacts', {
+              method: 'POST',
+              headers: {
+                'accept': 'application/json',
+                'api-key': env.BREVO_API_KEY,
+                'content-type': 'application/json',
+              },
+              body: JSON.stringify({
+                email: payload.email.trim(),
+                updateEnabled: true,
+                listIds: env.BREVO_LIST_ID ? [parseInt(env.BREVO_LIST_ID, 10)] : undefined,
+                attributes: { NOME: firstName, COGNOME: lastName },
+              }),
+            })
+          } else {
+            cResError = ''
+          }
         }
       } catch (err) {
+        cResError = String(err)
         console.warn('Errore durante la creazione contatto Brevo:', err)
       }
 
@@ -607,7 +651,7 @@ export default {
         }
       }
 
-      return new Response(JSON.stringify({ success: true, score, fascia: fascia.titolo }), {
+      return new Response(JSON.stringify({ success: true, score, fascia: fascia.titolo, contactStatus: cResStatus, contactError: cResError }), {
         status: 200,
         headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       })

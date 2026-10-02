@@ -224,6 +224,15 @@ function bind() {
 
   form.addEventListener('submit', (e) => {
     e.preventDefault()
+    form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('[data-text]').forEach((input) => {
+      if (input.dataset.text) {
+        answers[input.dataset.text] = input.value.trim()
+      }
+    })
+    const privacy = form.querySelector<HTMLInputElement>('[data-privacy]')
+    if (privacy) {
+      answers.privacy = privacy.checked ? 'sì' : ''
+    }
     if (!isComplete() || busy) return
     const email = form.querySelector<HTMLInputElement>('input[type="email"]')
     if (email && !email.checkValidity()) {

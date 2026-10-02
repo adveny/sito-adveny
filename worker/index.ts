@@ -54,6 +54,15 @@ function formatList(val: unknown): string {
   return str.length > 0 ? str : '—'
 }
 
+function formatSms(phone?: string): string | undefined {
+  if (!phone) return undefined
+  let clean = phone.replace(/[\s\-\(\)\.]/g, '')
+  if (clean.startsWith('+')) clean = clean.slice(1)
+  if (/^3\d{9}$/.test(clean)) clean = '39' + clean
+  if (/^\d{10,15}$/.test(clean)) return clean
+  return undefined
+}
+
 function getFascia(score: number): { titolo: string; testo: string } {
   if (score >= 80) {
     return {
@@ -432,6 +441,13 @@ export default {
       return new Response(null, { status: 204, headers: CORS_HEADERS })
     }
 
+    if (request.method === 'GET') {
+      return new Response(JSON.stringify({ status: 'ok', service: 'adveny-potenziometro-brevo' }), {
+        status: 200,
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      })
+    }
+
     if (request.method !== 'POST') {
       return new Response(JSON.stringify({ error: 'Metodo non consentito' }), {
         status: 405,
@@ -469,17 +485,30 @@ export default {
       const dateStr = now.toLocaleString('it-IT', { timeZone: 'Europe/Rome' })
 
       // 1. Aggiunta/aggiornamento del contatto in Brevo
+      const nameParts = (payload.nome_cognome || '').trim().split(/\s+/)
+      const firstName = nameParts[0] || ''
+      const lastName = nameParts.slice(1).join(' ') || ''
+      const cleanSms = formatSms(payload.telefono)
+
+      const attributes: Record<string, unknown> = {
+        NOME: firstName,
+        COGNOME: lastName,
+        AZIENDA: payload.azienda ? payload.azienda.trim() : '',
+        SCORE: score,
+        FASCIA: fascia.titolo,
+        DATA_CONSENSO: payload.timestamp || now.toISOString(),
+      }
+      if (cleanSms) {
+        attributes.SMS = cleanSms
+      }
+      if (payload.telefono) {
+        attributes.LANDLINE_NUMBER = payload.telefono.trim()
+      }
+
       const contactBody: Record<string, unknown> = {
         email: payload.email.trim(),
         updateEnabled: true,
-        attributes: {
-          NOME: payload.nome_cognome.trim(),
-          AZIENDA: payload.azienda ? payload.azienda.trim() : '',
-          SMS: payload.telefono ? payload.telefono.trim() : '',
-          SCORE: score,
-          FASCIA: fascia.titolo,
-          DATA_CONSENSO: payload.timestamp || now.toISOString(),
-        },
+        attributes,
       }
 
       if (env.BREVO_LIST_ID) {
@@ -490,7 +519,7 @@ export default {
       }
 
       try {
-        await fetch('https://api.brevo.com/v3/contacts', {
+        const cRes = await fetch('https://api.brevo.com/v3/contacts', {
           method: 'POST',
           headers: {
             'accept': 'application/json',
@@ -499,6 +528,26 @@ export default {
           },
           body: JSON.stringify(contactBody),
         })
+
+        if (!cRes.ok && cRes.status !== 201 && cRes.status !== 204) {
+          const errText = await cRes.text()
+          console.warn('Brevo contact warning:', cRes.status, errText)
+          // Fallback resiliente: salva comunque il contatto e lo associa alla lista
+          await fetch('https://api.brevo.com/v3/contacts', {
+            method: 'POST',
+            headers: {
+              'accept': 'application/json',
+              'api-key': env.BREVO_API_KEY,
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: payload.email.trim(),
+              updateEnabled: true,
+              listIds: env.BREVO_LIST_ID ? [parseInt(env.BREVO_LIST_ID, 10)] : undefined,
+              attributes: { NOME: firstName, COGNOME: lastName },
+            }),
+          })
+        }
       } catch (err) {
         console.warn('Errore durante la creazione contatto Brevo:', err)
       }

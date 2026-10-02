@@ -1,6 +1,7 @@
 import { boot, gsap, reduceMotion, getLenis } from '../core'
 import { STEPS, type Question } from '../data'
 import { ICONS } from '../icons'
+import { calculateScore, getFascia } from '../score'
 
 type Answers = Record<string, string | string[] | undefined>
 
@@ -278,6 +279,10 @@ async function showResult() {
   overlay.classList.add('is-on')
   gsap.to(main, { opacity: 0, filter: 'blur(12px)', duration: 0.35 })
 
+  // Calcolo reale dello score e della fascia
+  const score = calculateScore(answers)
+  const fascia = getFascia(score)
+
   const apiUrl =
     (import.meta.env.VITE_POTENZIOMETRO_API_URL as string) ||
     'https://adveny-potenziometro-brevo.adveny.workers.dev'
@@ -285,7 +290,7 @@ async function showResult() {
     ? fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(answers),
+        body: JSON.stringify({ ...answers, score, timestamp: new Date().toISOString() }),
       }).catch((err) => {
         console.error('Errore invio dati potenziometro:', err)
       })
@@ -300,8 +305,7 @@ async function showResult() {
   step = STEPS.length - 1
   stepsNav.querySelectorAll('li').forEach((li) => { li.classList.remove('is-current'); li.classList.add('is-done') })
   bar.style.width = '100%'
-  // demo: punteggio casuale, come sul sito attuale
-  const score = 58 + Math.floor(Math.random() * 35)
+
   const C = 2 * Math.PI * 85
   main.innerHTML = `
     <section class="pz__result glass">
@@ -313,8 +317,8 @@ async function showResult() {
         </svg>
         <strong><span data-score>0</span><small>%</small></strong>
       </div>
-      <h1 class="h2" tabindex="-1" data-title>Il tuo potenziale di <span class="iri">crescita</span></h1>
-      <p class="lead" style="max-width: 52ch">Abbiamo analizzato la tua attività su 6 aree chiave: acquisizione, fidelizzazione, strumenti, metodo, strategia e visione.</p>
+      <h1 class="h2" tabindex="-1" data-title>${fascia.titolo}</h1>
+      <p class="lead" style="max-width: 52ch">${fascia.testo}</p>
       <ol class="pz__next">
         <li>
           <span class="pz__next-icon">${ICONS.mail}</span>

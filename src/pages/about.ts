@@ -126,12 +126,12 @@ if (reduceMotion) {
   const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } })
   items.forEach((item, i) => {
     const iri = item.querySelector<HTMLElement>('.iri')
-    const chars = iri ? null : SplitText.create(item, { type: 'words,chars', mask: 'words' }).chars
+    const chars = iri ? null : SplitText.create(item, { type: 'words,chars', mask: 'words', wordsClass: 'split-word' }).chars
     const at = i * 2
-    if (chars) tl.fromTo(chars, { yPercent: 115 }, { yPercent: 0, duration: 1, stagger: { amount: 0.35 } }, at)
+    if (chars) tl.fromTo(chars, { yPercent: 120 }, { yPercent: 0, duration: 1, stagger: { amount: 0.35 } }, at)
     else tl.fromTo(iri, { clipPath: 'inset(-10% 100% -10% 0%)', x: -30 }, { clipPath: 'inset(-10% 0% -10% 0%)', x: 0, duration: 1.2 }, at)
     // le prime due escono verso l'alto per lasciare posto alla successiva
-    if (chars && i < items.length - 1) tl.to(chars, { yPercent: -115, duration: 0.8, stagger: { amount: 0.25 }, ease: 'power3.in' }, at + 1.3)
+    if (chars && i < items.length - 1) tl.to(chars, { yPercent: -120, duration: 0.8, stagger: { amount: 0.25 }, ease: 'power3.in' }, at + 1.3)
   })
   tl.fromTo(wordsCta, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.8 }, items.length * 2 - 0.6)
   tl.to({}, { duration: 0.8 })

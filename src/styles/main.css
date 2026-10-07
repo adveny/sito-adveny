@@ -130,8 +130,8 @@ body.is-leaving .page-veil { opacity: 1; transition-duration: 0.35s; }
   color: var(--ink-3); display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap;
 }
 .eyebrow::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--lavender); flex: none; }
-.display { font-family: var(--f-display); font-weight: 500; letter-spacing: -0.045em; line-height: 1; font-size: clamp(38px, 6vw, 96px); }
-.h2 { font-family: var(--f-display); font-weight: 500; letter-spacing: -0.04em; line-height: 1.05; font-size: clamp(30px, 4vw, 60px); text-wrap: balance; }
+.display { font-family: var(--f-display); font-weight: 500; letter-spacing: -0.045em; line-height: 1.12; font-size: clamp(38px, 6vw, 96px); }
+.h2 { font-family: var(--f-display); font-weight: 500; letter-spacing: -0.04em; line-height: 1.12; font-size: clamp(30px, 4vw, 60px); text-wrap: balance; }
 .h3 { font-family: var(--f-display); font-weight: 500; letter-spacing: -0.025em; line-height: 1.15; font-size: clamp(21px, 1.9vw, 28px); }
 .lead { font-size: clamp(17px, 1.3vw, 20px); line-height: 1.55; color: var(--ink-2); max-width: 44ch; }
 .body { color: var(--ink-2); max-width: 52ch; }
@@ -141,9 +141,10 @@ body.is-leaving .page-veil { opacity: 1; transition-duration: 0.35s; }
   -webkit-background-clip: text; background-clip: text;
   color: transparent; -webkit-text-fill-color: transparent;
 }
-.iri-block { display: block; }
+.iri-block, .iri.split-word { display: inline-block; padding-block: 0.04em; margin-block: -0.04em; }
 .split-line { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
 .split-word { display: inline-block; }
+.split-word-mask { display: inline-block; overflow: clip; }
 
 /* ---------- bottoni ---------- */
 .btn {
@@ -243,7 +244,7 @@ body.is-leaving .page-veil { opacity: 1; transition-duration: 0.35s; }
 /* ---------- footer ---------- */
 .footer { position: relative; padding: clamp(80px, 11vw, 160px) var(--gutter) 40px; border-top: 1px solid var(--line); }
 .footer__cta { max-width: var(--maxw); margin: 0 auto; }
-.footer__title { font-family: var(--f-display); font-weight: 500; letter-spacing: -0.05em; line-height: 0.98; font-size: clamp(40px, 7.4vw, 120px); max-width: 13ch; }
+.footer__title { font-family: var(--f-display); font-weight: 500; letter-spacing: -0.05em; line-height: 1.1; font-size: clamp(40px, 7.4vw, 120px); max-width: 13ch; }
 .footer__cta-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 28px; margin-top: 44px; }
 .footer__lead { color: var(--ink-2); max-width: 40ch; }
 .footer[data-variant='nocta'] .footer__cta { display: none; }
@@ -323,7 +324,7 @@ body.is-leaving .page-veil { opacity: 1; transition-duration: 0.35s; }
 .hero__words { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
 .hero__word {
   grid-area: 1 / 1; text-align: center; padding: 0 var(--gutter);
-  font-family: var(--f-display); font-weight: 500; letter-spacing: -0.05em; line-height: 1.02;
+  font-family: var(--f-display); font-weight: 500; letter-spacing: -0.05em; line-height: 1.16;
   font-size: clamp(44px, 8.4vw, 144px);
 }
 /* nulla si vede finché la timeline non è pronta */
@@ -361,8 +362,43 @@ body.is-leaving .page-veil { opacity: 1; transition-duration: 0.35s; }
 .hero.is-static { height: 100vh; }
 .hero.is-static .hero__words, .hero.is-static .hero__progress, .hero.is-static .hero__hint { display: none; }
 
-/* hero statica */
-.static-hero { min-height: 100vh; min-height: 100svh; display: flex; align-items: center; padding: 140px 0 100px; }
+/* hero iniziale */
+.static-hero {
+  position: relative;
+  min-height: 100vh; min-height: 100svh;
+  display: flex; align-items: center;
+  padding: 140px 0 100px;
+  overflow: hidden;
+}
+.static-hero .wrap { position: relative; z-index: 2; }
+.static-hero .hero__hint {
+  position: absolute; left: 50%; bottom: 32px; transform: translateX(-50%); z-index: 2;
+}
+.static-hero__light, .static-hero__tint {
+  position: absolute; left: 0; top: 0; width: 24vmax; height: 24vmax; margin: -12vmax 0 0 -12vmax;
+  pointer-events: none; opacity: 0; transition: opacity 0.9s var(--ease); will-change: transform, opacity;
+}
+.static-hero__light.is-on, .static-hero__tint.is-on { opacity: 0.9; }
+.static-hero__tint { z-index: 3; mix-blend-mode: color; }
+.static-hero__light b, .static-hero__tint b {
+  position: absolute; inset: 8%; display: block;
+  border-radius: 46% 54% 58% 42% / 44% 40% 60% 56%;
+  filter: blur(22px);
+  animation: blob 9s ease-in-out infinite alternate;
+}
+.static-hero__tint b {
+  background: radial-gradient(closest-side,
+    #e6e4ee 0%, #d6cff0 24%, #b49af0 42%, #9a55f0 56%, rgb(140 12 234 / 0.85) 68%, rgb(140 12 234 / 0.4) 84%, transparent 100%);
+}
+.static-hero__light b {
+  background: radial-gradient(closest-side,
+    rgb(229 229 229) 0%, rgb(213 213 213) 24%, rgb(171 171 171) 42%, rgb(123 123 123) 56%, rgb(75 75 75 / 0.85) 68%, rgb(75 75 75 / 0.4) 84%, transparent 100%);
+}
+.static-hero__light b::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+@media (prefers-reduced-motion: reduce) { .static-hero__light b, .static-hero__tint b { animation: none; } }
 .static-hero__grid { display: grid; gap: 32px; }
 .static-hero .display { max-width: 13ch; }
 .static-hero__row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 32px 60px; margin-top: 12px; }
@@ -434,7 +470,7 @@ em { font-style: normal; }
    (cqi di .method__main), così "Ottimizziamo" col simbolo davanti non esce mai */
 .method__main { container-type: inline-size; }
 .method__verb {
-  font-family: var(--f-display); font-weight: 500; letter-spacing: -0.05em; line-height: 0.95; white-space: nowrap;
+  font-family: var(--f-display); font-weight: 500; letter-spacing: -0.05em; line-height: 1.08; white-space: nowrap;
   /* colonna del verbo = 1.25 / 2.25 della card meno lo spazio tra le colonne;
      "›Ottimizziamo", il più lungo, è largo ~8.1em: 8.4 lascia un po' d'aria */
   --verb-fit: calc((100cqi - clamp(24px, 5vw, 72px)) * 0.5556 / 8.4);
@@ -477,7 +513,7 @@ em { font-style: normal; }
 }
 .case__placeholder::after { content: ''; position: absolute; inset: 0; background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 40px 40px; }
 .case__info { display: flex; flex-direction: column; gap: 18px; padding: clamp(6px, 1.4vw, 18px) clamp(4px, 1vw, 14px) 6px 0; }
-.case__name { font-family: var(--f-display); font-weight: 500; font-size: clamp(26px, 2.6vw, 40px); letter-spacing: -0.04em; line-height: 1.05; }
+.case__name { font-family: var(--f-display); font-weight: 500; font-size: clamp(26px, 2.6vw, 40px); letter-spacing: -0.04em; line-height: 1.12; }
 .case__desc { color: var(--ink-2); }
 .case__tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .case__results { margin-top: auto; display: grid; gap: 12px; }
@@ -593,7 +629,7 @@ em { font-style: normal; }
 .words__list { display: grid; place-items: center; }
 .words__item {
   grid-area: 1 / 1; text-align: center; padding: 0 var(--gutter);
-  font-family: var(--f-display); font-weight: 500; letter-spacing: -0.05em; line-height: 1.02; font-size: clamp(40px, 8vw, 132px);
+  font-family: var(--f-display); font-weight: 500; letter-spacing: -0.05em; line-height: 1.14; font-size: clamp(40px, 8vw, 132px);
 }
 .words__item .iri { display: inline-block; padding-block: 0.1em; margin-block: -0.1em; }
 .words.is-static { height: auto; }
@@ -601,7 +637,7 @@ em { font-style: normal; }
 .words.is-static .words__item { grid-area: auto; }
 
 .manifesto__kicker { display: grid; margin-bottom: 44px; }
-.manifesto__kicker span { font-family: var(--f-display); font-weight: 500; font-size: clamp(42px, 8.4vw, 140px); letter-spacing: -0.055em; line-height: 0.98; }
+.manifesto__kicker span { font-family: var(--f-display); font-weight: 500; font-size: clamp(42px, 8.4vw, 140px); letter-spacing: -0.055em; line-height: 1.08; }
 .manifesto__text { font-family: var(--f-display); font-weight: 500; font-size: clamp(22px, 3vw, 44px); letter-spacing: -0.03em; line-height: 1.2; max-width: 26ch; }
 
 /* about — team: avatar in linea bianca con curve di livello (about.ts) */
@@ -665,7 +701,7 @@ em { font-style: normal; }
 .offer { position: relative; height: 460vh; }
 .offer__stage { position: sticky; top: 0; height: 100vh; height: 100svh; display: grid; place-items: center; overflow: hidden; }
 .offer__inner { position: relative; display: grid; justify-items: center; text-align: center; gap: clamp(22px, 3.4vh, 36px); }
-.offer__title { display: grid; justify-items: center; gap: 0.18em; text-wrap: balance; font-family: var(--f-display); font-weight: 500; letter-spacing: -0.045em; line-height: 1.02; }
+.offer__title { display: grid; justify-items: center; gap: 0.18em; text-wrap: balance; font-family: var(--f-display); font-weight: 500; letter-spacing: -0.045em; line-height: 1.12; }
 .offer__a { font-size: clamp(30px, 4.2vw, 64px); max-width: 26ch; }
 /* la frase chiave, più grande */
 .offer__b { font-size: clamp(38px, 6.4vw, 104px); max-width: 14ch; text-wrap: balance; }
@@ -873,7 +909,7 @@ body[data-page='servizi'] .offer__glow { background: radial-gradient(closest-sid
 .legal__close { top: 50%; right: 18px; translate: 0 -50%; }
 .legal__body { overflow-y: auto; overscroll-behavior: contain; padding: clamp(24px, 4vw, 48px) clamp(20px, 4vw, 44px) 48px; }
 .legal__body article { max-width: 68ch; }
-.legal__title { font-family: var(--f-display); font-weight: 500; letter-spacing: -0.04em; line-height: 1; font-size: clamp(30px, 4vw, 48px); margin: 0 0 20px; }
+.legal__title { font-family: var(--f-display); font-weight: 500; letter-spacing: -0.04em; line-height: 1.12; font-size: clamp(30px, 4vw, 48px); margin: 0 0 20px; }
 .legal__intro { font-size: 17px; line-height: 1.6; color: var(--ink); margin-bottom: 8px; }
 .legal__body h3 { font-family: var(--f-display); font-weight: 500; font-size: 18px; letter-spacing: -0.02em; margin: 36px 0 10px; }
 .legal__body p, .legal__body li { font-size: 15px; line-height: 1.65; color: var(--ink-2); }

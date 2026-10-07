@@ -185,7 +185,7 @@ export function initTextAnimations(root: ParentNode = document) {
       type: 'words', mask: 'words', wordsClass: 'split-word', autoSplit: true, ignore: '.iri',
       onSplit: (s) => {
         const targets = [...s.words, ...el.querySelectorAll('.iri')]
-        return gsap.from(targets, { yPercent: 100, duration: 1.1, stagger: 0.035, delay, ease: 'expo.out', scrollTrigger: trigger })
+        return gsap.from(targets, { yPercent: 110, duration: 1.1, stagger: 0.035, delay, ease: 'expo.out', scrollTrigger: trigger })
       },
     })
   })

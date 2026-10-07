@@ -8,8 +8,95 @@ renderSectors()
 await boot('home')
 
 // ============================================================
-// HERO — quattro keyword, poi l'ecosistema Adveny: il logo originale
-// al centro e tre anelli concentrici che girano, con le keyword come card.
+// HERO PRINCIPALE — "Il futuro della tua azienda inizia ora"
+// ============================================================
+initEntryHero()
+
+function initEntryHero() {
+  const entryHero = document.querySelector<HTMLElement>('[data-entry-hero]')
+  if (!entryHero) return
+
+  const eyebrow = entryHero.querySelector<HTMLElement>('[data-entry-eyebrow]')
+  const title = entryHero.querySelector<HTMLElement>('[data-entry-title]')
+  const lead = entryHero.querySelector<HTMLElement>('[data-entry-lead]')
+  const cta = entryHero.querySelector<HTMLElement>('[data-entry-cta]')
+  const hint = entryHero.querySelector<HTMLElement>('[data-hero-hint]')
+
+  // Split eyebrow a lettere e titolo a parole
+  const eyeSplit = eyebrow ? SplitText.create(eyebrow, { type: 'chars' }) : null
+  const iriWords = title ? title.querySelectorAll<HTMLElement>('.iri') : null
+  if (iriWords) iriWords.forEach((i) => i.classList.add('split-word'))
+  const titleSplit = title ? SplitText.create(title, {
+    type: 'words', mask: 'words', wordsClass: 'split-word', ignore: '.iri',
+  }) : null
+
+  // Fascio di luce reattivo al puntatore del mouse
+  const lightEl = (cls: string) => {
+    const el = document.createElement('i')
+    el.className = cls
+    el.setAttribute('aria-hidden', 'true')
+    el.append(document.createElement('b'))
+    return el
+  }
+  const entryLight = [lightEl('static-hero__light'), lightEl('static-hero__tint')]
+  entryHero.prepend(entryLight[0])
+  entryHero.prepend(entryLight[1])
+
+  const setEntryLight = (on: boolean) => entryLight.forEach((el) => el.classList.toggle('is-on', on))
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    const ease = reduceMotion ? 0.01 : 0.85
+    const xTo = gsap.quickTo(entryLight, 'x', { duration: ease, ease: 'power3' })
+    const yTo = gsap.quickTo(entryLight, 'y', { duration: ease, ease: 'power3' })
+    entryHero.addEventListener('pointerenter', (e) => {
+      const rect = entryHero.getBoundingClientRect()
+      xTo(e.clientX - rect.left, e.clientX - rect.left)
+      yTo(e.clientY - rect.top, e.clientY - rect.top)
+      setEntryLight(true)
+    })
+    entryHero.addEventListener('pointermove', (e) => {
+      const rect = entryHero.getBoundingClientRect()
+      xTo(e.clientX - rect.left)
+      yTo(e.clientY - rect.top)
+    })
+    entryHero.addEventListener('pointerleave', () => setEntryLight(false))
+  }
+
+  // Sequenza di entrata cinematica all'avvio
+  if (!reduceMotion) {
+    const entryTl = gsap.timeline({ delay: 0.25, defaults: { ease: 'power3.out' } })
+    if (eyeSplit) {
+      entryTl.from(eyeSplit.chars, { opacity: 0, duration: 0.6, stagger: 0.016, ease: 'power1.out' }, 0)
+    }
+    if (titleSplit) {
+      const allWords = [...titleSplit.words, ...(title?.querySelectorAll('.iri') || [])]
+      entryTl.from(allWords, { yPercent: 120, duration: 1.1, stagger: 0.04, ease: 'expo.out' }, 0.14)
+    }
+    if (lead) {
+      entryTl.from(lead, { opacity: 0, y: 24, duration: 1, ease: 'expo.out' }, 0.42)
+    }
+    if (cta) {
+      entryTl.from(cta, { opacity: 0, y: 24, duration: 1, ease: 'expo.out' }, 0.52)
+    }
+    if (hint) {
+      entryTl.fromTo(hint, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 1.1, ease: 'power2.out' }, 1.1)
+    }
+  }
+
+  // L'indicatore di scroll scompare non appena si comincia a scorrere
+  if (hint) {
+    const onScroll = () => {
+      const scrolled = window.scrollY > 40
+      hint.style.opacity = scrolled ? '0' : '1'
+      hint.style.pointerEvents = scrolled ? 'none' : 'auto'
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+  }
+}
+
+// ============================================================
+// ECOSISTEMA ADVENY — quattro keyword, poi il logo e gli anelli
+// guidati dallo scroll a schermo intero (stage sticky)
 // ============================================================
 const hero = document.querySelector<HTMLElement>('[data-hero]')!
 const words = Array.from(hero.querySelectorAll<HTMLElement>('[data-word]'))
@@ -17,7 +104,6 @@ const we = hero.querySelector<HTMLElement>('[data-we]')!
 const logo = hero.querySelector<HTMLElement>('[data-logo]')!
 const svg = hero.querySelector<SVGSVGElement>('[data-rings]')!
 const bars = Array.from(hero.querySelectorAll<HTMLElement>('[data-hero-progress] i'))
-const hint = hero.querySelector<HTMLElement>('[data-hero-hint]')!
 
 // anello interno → esterno
 const RINGS = [
@@ -104,8 +190,8 @@ let orbitT = 0
 placePills(0)
 
 // lettere delle keyword e di "We are" dentro maschere
-const wordSplits = words.map((w) => SplitText.create(w, { type: 'words,chars', mask: 'words' }))
-const weSplit = SplitText.create(we, { type: 'chars', mask: 'chars' })
+const wordSplits = words.map((w) => SplitText.create(w, { type: 'words,chars', mask: 'words', wordsClass: 'split-word' }))
+const weSplit = SplitText.create(we, { type: 'chars', mask: 'chars', charsClass: 'split-char' })
 
 // dove deve atterrare la keyword i per diventare la sua pillola (rispetto al centro)
 const landing = (i: number) => {
@@ -128,7 +214,7 @@ pills.forEach((p) => gsap.set(p.firstElementChild, { opacity: 0 }))
 wordSplits.forEach((s, i) => {
   const at = i * STEP
   const pill = pills[i].firstElementChild as HTMLElement
-  heroTl.fromTo(s.chars, { yPercent: 115 }, { yPercent: 0, duration: 1, stagger: { amount: 0.4 } }, at)
+  heroTl.fromTo(s.chars, { yPercent: 120 }, { yPercent: 0, duration: 1, stagger: { amount: 0.4 } }, at)
   // la keyword si rimpicciolisce e vola sul suo anello...
   heroTl.fromTo(words[i], { x: 0, y: 0, scale: 1, opacity: 1 }, {
     x: () => landing(i).x, y: () => landing(i).y, scale: () => landing(i).scale,
@@ -139,7 +225,7 @@ wordSplits.forEach((s, i) => {
   heroTl.fromTo(pill, { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.45, immediateRender: false }, at + 2.75)
 })
 const eco = words.length * STEP
-heroTl.fromTo(weSplit.chars, { yPercent: 115 }, { yPercent: 0, duration: 0.8, stagger: { amount: 0.2 } }, eco)
+heroTl.fromTo(weSplit.chars, { yPercent: 120 }, { yPercent: 0, duration: 0.8, stagger: { amount: 0.2 } }, eco)
 // il logo entra con una maschera: nel frame finale resta identico all'originale
 heroTl.fromTo(logo, { clipPath: 'inset(100% 0% 0% 0%)', y: 24 }, { clipPath: 'inset(0% 0% 0% 0%)', y: 0, duration: 1.1 }, eco + 0.2)
 // gli anelli si disegnano passando sotto le card già posizionate
@@ -169,20 +255,16 @@ const heroEnd = heroTl.duration()
 const syncBars = () => {
   const t = heroTl.time()
   bars.forEach((b, i) => b.style.setProperty('--p', String(Math.min(1, Math.max(0, (t - i * STEP) / (i < words.length ? 2.1 : 2))))))
-  hint.style.opacity = t > INTRO + 0.2 ? '0' : '1'
 }
 
-// la prima keyword entra da sola al caricamento; lo scroll guida il resto
-const INTRO = 1.2
-
-// luci di sfondo: durante le keyword restano ai bordi e si avvicinano a ogni
-// parola; quando entra il logo si fermano nella composizione del brand
+// luci di sfondo: coordinate tra la hero d'entrata e lo scroll dell'ecosistema
 setAuraKeys(() => {
   const top = hero.offsetTop
   const range = hero.offsetHeight - innerHeight
-  const at = (t: number) => top + ((t - INTRO) / (heroEnd - INTRO)) * range
+  const at = (t: number) => top + (t / heroEnd) * range
   return [
-    { at: 0, spread: 1.16, turn: -40 },
+    { at: 0, spread: 1.15, turn: -30 },
+    { at: top, spread: 1.16, turn: -20 },
     { at: at(eco + 1.4), spread: 1, turn: 0 },
     { at: top + range, spread: 1, turn: 4 },
     { at: top + range + innerHeight, spread: 1.28, turn: 14 },
@@ -193,15 +275,13 @@ if (reduceMotion) {
   heroTl.progress(1)
   syncBars()
 } else {
-  heroTl.tweenFromTo(0, INTRO, { delay: 0.3, onUpdate: syncBars })
-  const proxy = { t: INTRO }
-  gsap.to(proxy, {
-    t: heroEnd, ease: 'none',
-    scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom bottom', scrub: 0.6 },
-    onUpdate: () => {
-      // non interrompere l'intro se l'utente non ha ancora scrollato
-      if (proxy.t <= INTRO + 0.001 && heroTl.time() < INTRO) return
-      heroTl.time(proxy.t)
+  ScrollTrigger.create({
+    trigger: hero,
+    start: 'top top',
+    end: 'bottom bottom',
+    scrub: 0.6,
+    onUpdate: (self) => {
+      heroTl.time(self.progress * heroEnd)
       syncBars()
     },
   })

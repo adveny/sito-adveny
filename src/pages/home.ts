@@ -22,12 +22,21 @@ function initEntryHero() {
   const cta = entryHero.querySelector<HTMLElement>('[data-entry-cta]')
   const hint = entryHero.querySelector<HTMLElement>('[data-hero-hint]')
 
-  // Split eyebrow a lettere e titolo a parole
-  const eyeSplit = eyebrow ? SplitText.create(eyebrow, { type: 'chars' }) : null
+  // Titolo diviso a parole
   const iriWords = title ? title.querySelectorAll<HTMLElement>('.iri') : null
-  if (iriWords) iriWords.forEach((i) => i.classList.add('split-word'))
+  if (iriWords) {
+    iriWords.forEach((i) => {
+      i.classList.add('split-word')
+      if (!i.parentElement?.classList.contains('split-word-mask')) {
+        const mask = document.createElement('div')
+        mask.className = 'split-word-mask'
+        i.replaceWith(mask)
+        mask.appendChild(i)
+      }
+    })
+  }
   const titleSplit = title ? SplitText.create(title, {
-    type: 'words', mask: 'words', wordsClass: 'split-word', ignore: '.iri',
+    type: 'words', mask: 'words', wordsClass: 'split-word', ignore: '.iri, .split-word-mask',
   }) : null
 
   // Fascio di luce reattivo al puntatore del mouse
@@ -64,8 +73,8 @@ function initEntryHero() {
   // Sequenza di entrata cinematica all'avvio
   if (!reduceMotion) {
     const entryTl = gsap.timeline({ delay: 0.25, defaults: { ease: 'power3.out' } })
-    if (eyeSplit) {
-      entryTl.from(eyeSplit.chars, { opacity: 0, duration: 0.6, stagger: 0.016, ease: 'power1.out' }, 0)
+    if (eyebrow) {
+      entryTl.fromTo(eyebrow, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.75, ease: 'power2.out' }, 0)
     }
     if (titleSplit) {
       const allWords = [...titleSplit.words, ...(title?.querySelectorAll('.iri') || [])]

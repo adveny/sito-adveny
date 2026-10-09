@@ -180,9 +180,17 @@ export function initTextAnimations(root: ParentNode = document) {
       return
     }
     // words: le parole in gradiente restano intere per non spezzare il colore
-    el.querySelectorAll<HTMLElement>('.iri').forEach((i) => i.classList.add('split-word'))
+    el.querySelectorAll<HTMLElement>('.iri').forEach((i) => {
+      i.classList.add('split-word')
+      if (!i.parentElement?.classList.contains('split-word-mask')) {
+        const mask = document.createElement('div')
+        mask.className = 'split-word-mask'
+        i.replaceWith(mask)
+        mask.appendChild(i)
+      }
+    })
     SplitText.create(el, {
-      type: 'words', mask: 'words', wordsClass: 'split-word', autoSplit: true, ignore: '.iri',
+      type: 'words', mask: 'words', wordsClass: 'split-word', autoSplit: true, ignore: '.iri, .split-word-mask',
       onSplit: (s) => {
         const targets = [...s.words, ...el.querySelectorAll('.iri')]
         return gsap.from(targets, { yPercent: 110, duration: 1.1, stagger: 0.035, delay, ease: 'expo.out', scrollTrigger: trigger })

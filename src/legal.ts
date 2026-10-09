@@ -14,7 +14,7 @@ export const LEGAL = {
     { nome: 'Francesco Berutti', piva: '04073790927', cf: 'BRTFNC98P23B354R' },
     { nome: 'Michele Pirro', piva: '04089020921', cf: 'PRRMHL98H16B354W' },
   ],
-  email: 'advenystudio@gmail.com', // provvisoria: da sostituire quando arriva quella definitiva
+  email: 'info@adveny.it',
   hosting: 'Vercel Inc. (Stati Uniti)',
   aggiornata: '25 settembre 2026',
   gtm: '', // es. 'GTM-ABC1234': vuoto = Tag Manager non viene caricato

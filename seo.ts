@@ -42,7 +42,7 @@ const ORG = {
   url: `${SITE}/`,
   logo: { '@type': 'ImageObject', url: `${SITE}/img/adveny-logo.png`, width: 512, height: 512 },
   image: OG_IMAGE,
-  email: 'advenystudio@gmail.com',
+  email: 'info@adveny.it',
   // attività senza sede aperta al pubblico: solo la città, niente indirizzo
   address: { '@type': 'PostalAddress', addressLocality: 'Cagliari', addressRegion: 'CA', addressCountry: 'IT' },
   areaServed: AREA,

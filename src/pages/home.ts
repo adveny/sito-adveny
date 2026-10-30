@@ -543,18 +543,50 @@ mm.add('(max-width: 860px)', () => {
 
 // ---------- modale caso studio ----------
 const modal = document.querySelector<HTMLElement>('[data-modal]')!
+const modalPanel = modal.querySelector<HTMLElement>('.modal__panel')!
 const modalMedia = modal.querySelector<HTMLElement>('[data-modal-media]')!
 const modalInfo = modal.querySelector<HTMLElement>('[data-modal-info]')!
 let lastFocus: HTMLElement | null = null
+const renderModalInfo = (c: Case, card: HTMLElement) => {
+  if (!c.story) {
+    const html = card.querySelector('.case__info')!.innerHTML.replace(/<button[\s\S]*<\/button>/, '')
+    return html
+  }
+  const { headline, subtitle, sections, quote } = c.story
+  return `
+    <div class="case__modal-head">
+      <p class="eyebrow">${c.name}</p>
+      <h3 class="case__name" id="modal-title">${headline}</h3>
+      ${subtitle ? `<p class="case__sub">${subtitle}</p>` : ''}
+      <ul class="case__tags">${c.tags.map((t) => `<li class="chip">${t}</li>`).join('')}</ul>
+    </div>
+    <div class="case__metrics">
+      ${c.metrics.map((m) => `<div class="metric"><div class="metric__v">${fmtMetric(m.v, m.unit)}</div><div class="metric__l">${m.label}</div></div>`).join('')}
+    </div>
+    <div class="case__story">
+      ${sections.map((s) => `
+        <section class="case__sec">
+          <h4 class="case__sec-title">${s.title}</h4>
+          <div class="case__sec-body">
+            ${s.items.map((it) => `<p>${it.lead ? `<strong>${it.lead}</strong> ` : ''}${it.text}</p>`).join('')}
+          </div>
+        </section>
+      `).join('')}
+      ${quote ? `<blockquote class="case__quote">${quote}</blockquote>` : ''}
+    </div>`
+}
 const openCase = (i: number) => {
   const c = CASES[i]
   const card = track.querySelector<HTMLElement>(`[data-case="${i}"]`)!
   modalMedia.innerHTML = c.video
     ? `<video src="/video/${c.video}.mp4" poster="/video/${c.video}.jpg" muted loop playsinline autoplay controls></video>`
     : `<div class="case__placeholder" aria-hidden="true"></div>`
-  modalInfo.innerHTML = card.querySelector('.case__info')!.innerHTML.replace(/<button[\s\S]*<\/button>/, '')
-  modalInfo.querySelector('.case__name')!.id = 'modal-title'
-  modalInfo.querySelectorAll<HTMLElement>('[data-metric]').forEach((el) => (el.textContent = fmtMetric(parseFloat(el.dataset.metric!), el.dataset.unit)))
+  modalInfo.innerHTML = renderModalInfo(c, card)
+  if (!c.story) {
+    modalInfo.querySelector('.case__name')!.id = 'modal-title'
+    modalInfo.querySelectorAll<HTMLElement>('[data-metric]').forEach((el) => (el.textContent = fmtMetric(parseFloat(el.dataset.metric!), el.dataset.unit)))
+  }
+  modalPanel.scrollTop = 0
   lastFocus = document.activeElement as HTMLElement
   modal.classList.add('is-open')
   modal.setAttribute('aria-hidden', 'false')

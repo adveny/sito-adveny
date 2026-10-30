@@ -133,6 +133,18 @@ export const STEPS: Step[] = [
   },
 ]
 
+export type CaseSection = {
+  title: string
+  items: { lead?: string; text: string }[]
+}
+
+export type CaseStory = {
+  headline: string
+  subtitle?: string
+  sections: CaseSection[]
+  quote?: string
+}
+
 export type Case = {
   id: string
   name: string
@@ -141,11 +153,189 @@ export type Case = {
   // valore finale, suffisso (%, € o niente) ed etichetta; il "+" davanti è sempre implicito
   metrics: { v: number; unit?: string; label: string }[]
   video?: string
+  story?: CaseStory
 }
 
 export const CASES: Case[] = [
-  { id: 'physiomelis', name: 'Studio PhysioMelis', desc: 'Studio di Fisioterapia e Osteopatia integrata.', tags: ['Comunicazione', 'Advertising', 'Ottimizzazione dei processi'], metrics: [{ v: 3500, label: 'Contatti' }, { v: 37, unit: '%', label: 'Di fidelizzazione' }], video: 'physiomelis' },
-  { id: 'house-of-demu', name: 'House of Demu', desc: 'Private Chef, Catering e Show Cooking.', tags: ['Lancio del brand', 'Contenuti', 'Sponsorship'], metrics: [{ v: 6000, label: 'Follower il primo anno' }, { v: 52, label: 'Clienti fissi generati' }], video: 'house-of-demu' },
-  { id: 'pusceddu', name: 'Pusceddu Termoidraulica', desc: 'Esperti nella consulenza e rivendita di materiale termoidraulico.', tags: ['Comunicazione', 'Sito Web', 'Consulenza Marketing'], metrics: [{ v: 12, unit: '%', label: 'Di fatturato dal quinto mese' }, { v: 210, unit: '%', label: 'Di notorietà locale' }], video: 'pusceddu' },
+  {
+    id: 'physiomelis',
+    name: 'Studio PhysioMelis',
+    desc: 'Studio di Fisioterapia e Osteopatia integrata.',
+    tags: ['Comunicazione', 'Advertising', 'Ottimizzazione dei processi'],
+    metrics: [{ v: 3500, label: 'Contatti' }, { v: 37, unit: '%', label: 'Di fidelizzazione' }],
+    video: 'physiomelis',
+    story: {
+      headline: 'Da agenda discontinua a studio fisioterapico strutturato',
+      sections: [
+        {
+          title: 'Il punto di partenza',
+          items: [
+            { lead: 'Un lavoro di qualità, una crescita imprevedibile.', text: 'Davide gestiva da solo trattamenti, agenda e nuovi contatti. I pazienti arrivavano quasi solo dal passaparola: numeri impossibili da prevedere, quindi impossibile pianificare investimenti e sviluppo.' },
+            { lead: 'L’obiettivo.', text: 'Non era “fare pubblicità”. Era costruire un sistema che trasformasse la qualità del lavoro di Davide in una crescita costante e sostenibile.' },
+          ],
+        },
+        {
+          title: 'Prima il prodotto',
+          items: [
+            { lead: 'Posizionamento.', text: 'Abbiamo concentrato comunicazione e contenuti social su poche problematiche specifiche, quelle con più domanda e più spazio per distinguersi. Così lo studio è diventato riconoscibile su una nicchia precisa.' },
+            { lead: 'Offerta.', text: 'Dalla singola prestazione a percorsi strutturati per il paziente. Un’esperienza migliore per chi entra in studio, un processo di vendita più chiaro e margini da reinvestire nella crescita.' },
+          ],
+        },
+        {
+          title: 'Poi la pubblicità',
+          items: [
+            { lead: 'Meta Ads.', text: 'Solo a quel punto abbiamo attivato le campagne, con un sistema pensato per generare contatti profilati in modo continuo.' },
+          ],
+        },
+        {
+          title: 'Il primo anno',
+          items: [
+            { lead: '3.503 contatti, 773 prime visite, 441 percorsi avviati.', text: 'Con un flusso costante di richieste, l’agenda di Davide si è riempita. Sono arrivati una segretaria e nuovi fisioterapisti: da professionista che faceva tutto a studio con ruoli e processi.' },
+          ],
+        },
+        {
+          title: 'Il cambio di scenario',
+          items: [
+            { lead: 'Il mercato ha iniziato a copiare.', text: 'I concorrenti avevano replicato offerta e comunicazione. In più c’erano altri terapisti da riempire, e alzare il budget pubblicitario significava pagare ogni contatto sempre di più. Non bastava più farsi trovare: serviva farsi ricordare.' },
+          ],
+        },
+        {
+          title: 'Il brand',
+          items: [
+            { lead: 'Identità.', text: 'Un’immagine riconoscibile e una voce coerente su ogni canale, capaci di rappresentare lo studio oltre la figura del singolo professionista.' },
+            { lead: 'Sito.', text: 'Progettato per presentare PhysioMelis come una struttura organizzata: professionisti, servizi e percorsi chiari, prenotazione semplice, visibilità per chi cerca attivamente un fisioterapista.' },
+            { lead: 'Campagne.', text: 'Accanto alla generazione contatti abbiamo aggiunto campagne di notorietà e contenuti di fidelizzazione, per raggiungere chi doveva ancora scegliere e far tornare chi aveva già scelto.' },
+          ],
+        },
+        {
+          title: 'I risultati',
+          items: [
+            { lead: 'Fidelizzazione oltre +35%.', text: 'Più pazienti che tornano e completano il percorso.' },
+            { lead: 'Valore del paziente +20%.', text: 'Ogni paziente acquisito genera più valore nel tempo.' },
+            { lead: 'Oltre 200 recensioni', text: 'tra Google, Facebook e MioDottore. I pazienti non arrivano più solo perché li paghiamo per arrivare: arrivano perché quel nome, in quella zona, se lo ricordano.' },
+          ],
+        },
+      ],
+      quote: 'L’advertising porta contatti. Il brand li rende tuoi.',
+    },
+  },
+  {
+    id: 'house-of-demu',
+    name: 'House of Demu',
+    desc: 'Private Chef, Catering e Show Cooking.',
+    tags: ['Lancio del brand', 'Contenuti', 'Sponsorship'],
+    metrics: [{ v: 6000, label: 'Follower il primo anno' }, { v: 52, label: 'Clienti fissi generati' }],
+    video: 'house-of-demu',
+    story: {
+      headline: 'Da pizzaiolo dipendente a imprenditore libero',
+      subtitle: 'Il lancio di un nuovo brand nel private catering, senza capitale e senza pubblicità.',
+      sections: [
+        {
+          title: 'Il punto di partenza',
+          items: [
+            { lead: 'Un sogno preciso.', text: 'Riccardo lavorava come pizzaiolo dipendente e voleva una cosa sola: lavorare per sé, come pizzaiolo privato. Quando ci ha raccontato il progetto, nel 2022, aveva un piccolo forno, la sua esperienza e nessun capitale da investire.' },
+            { lead: 'L’obiettivo.', text: 'Lanciare un nuovo concept nel catering e nel private chef che gli permettesse di lasciare il lavoro. E mostrare ad altri pizzaioli che si può fare.' },
+          ],
+        },
+        {
+          title: 'L’idea',
+          items: [
+            { lead: 'Un mantra prima di un logo.', text: 'Tutto è partito da una frase: <i>portare il piacere della pizza ovunque tu voglia</i>. È diventata il filtro di ogni scelta successiva, dal servizio alla comunicazione.' },
+          ],
+        },
+        {
+          title: 'Prima il servizio',
+          items: [
+            { lead: 'Progettato per gli eventi.', text: 'Insieme a Riccardo abbiamo costruito un servizio capace di reggere tutte le variabili di un evento all’aperto. Prima di pensare a come venderlo, doveva funzionare ovunque.' },
+            { lead: 'Un’esperienza, non solo un catering.', text: 'Lo show cooking colpisce gli ospiti sul piano scenico, la pizza su quello culinario: fatta a regola d’arte, come in pizzeria, ma a casa del cliente.' },
+          ],
+        },
+        {
+          title: 'Lanciare senza budget',
+          items: [
+            { lead: 'Zero euro in pubblicità.', text: 'Senza capitale non si poteva comprare visibilità. Abbiamo cercato sponsor che finanziassero le attrezzature e dessero notorietà al brand, e Gozney ha creduto nel progetto.' },
+            { lead: 'Un target definito.', text: 'Famiglie, gruppi di amici e aziende. Sito, comunicazione e merchandising sono stati costruiti attorno a loro, insieme a un processo di vendita curato in ogni passaggio.' },
+          ],
+        },
+        {
+          title: 'I risultati',
+          items: [
+            { lead: 'Oltre 50 clienti nel primo anno.', text: 'Gli utili sono stati reinvestiti nella crescita della stagione successiva.' },
+            { lead: 'Una base clienti stabile.', text: 'Ogni anno abbiamo migliorato prodotto, servizio, postazione ed esperienza del cliente, mantenendo una clientela fissa stagione dopo stagione.' },
+            { lead: 'Red Valley 2025.', text: 'House of Demu è stata chiamata dal Red Valley Festival per occuparsi degli artisti.' },
+          ],
+        },
+        {
+          title: 'Il vero risultato',
+          items: [
+            { text: 'Oggi Riccardo vive della sua passione, con un’attività tutta sua. Il fatturato conta, ma il traguardo era questo: la libertà di fare il lavoro che ha scelto.' },
+          ],
+        },
+      ],
+      quote: 'Sito, social, merchandising: tutto è servito. La differenza però l’ha fatta il lavoro a monte, cioè una direzione chiara da seguire passo dopo passo.',
+    },
+  },
+  {
+    id: 'pusceddu',
+    name: 'Pusceddu Termoidraulica',
+    desc: 'Esperti nella consulenza e rivendita di materiale termoidraulico.',
+    tags: ['Comunicazione', 'Sito Web', 'Consulenza Marketing'],
+    metrics: [{ v: 12, unit: '%', label: 'Di fatturato dal quinto mese' }, { v: 210, unit: '%', label: 'Di notorietà locale' }],
+    video: 'pusceddu',
+    story: {
+      headline: 'Da rivenditore di materiale a partner tecnico',
+      sections: [
+        {
+          title: 'Il punto di partenza',
+          items: [
+            { lead: 'Competenza vera, percepita come magazzino.', text: 'Termoidraulica Sinnai aveva anni di lavoro alle spalle, un magazzino fisico e una competenza costruita cantiere dopo cantiere. Per il mercato, però, era un rivenditore come tanti. E quando sei percepito così, l’unica leva su cui competere è il prezzo.' },
+            { lead: 'Nessun asset di comunicazione.', text: 'Né un brand riconoscibile, né contenuti, né un sito capace di raccontare il valore reale dell’azienda.' },
+          ],
+        },
+        {
+          title: 'Il mercato era cambiato',
+          items: [
+            { lead: 'I professionisti cercavano altro.', text: 'Normative più complesse, tecnologie nuove, cantieri più difficili da gestire. Chi lavora sugli impianti non cercava più qualcuno che gli vendesse i pezzi, ma qualcuno che lo aiutasse a non sbagliare.' },
+            { lead: 'L’insight.', text: 'Quella consulenza Pusceddu la faceva già, da sempre. Non l’aveva mai comunicata.' },
+          ],
+        },
+        {
+          title: 'Il posizionamento',
+          items: [
+            { lead: 'Da fornitore a partner tecnico integrato.', text: 'Un partner che affianca il professionista prima del cantiere, gli segnala cosa manca prima di partire e resta presente anche dopo la fattura.' },
+            { lead: 'I claim.', text: '<i>“Meno imprevisti. Più margine.”</i> per tutti i professionisti. <i>“Il tuo reparto tecnico fuori dall’azienda.”</i> per impiantisti e imprese. Il problema più sentito dal target, il cantiere fermo per un pezzo mancante, diventa la promessa del brand.' },
+          ],
+        },
+        {
+          title: 'Il rebrand',
+          items: [
+            { lead: 'Prima la posizione, poi il nome.', text: 'Abbiamo deciso chi era l’azienda prima di decidere come chiamarla. Da Termoidraulica Sinnai a Pusceddu Termoidraulica: stessa competenza, nuova visione.' },
+            { lead: 'Identità e sito.', text: 'Nuova identità visiva e un sito costruito per target: una parte che parla la lingua dei professionisti, una che traduce tutto in chiarezza per il privato.' },
+          ],
+        },
+        {
+          title: 'La comunicazione',
+          items: [
+            { lead: 'Target diversi, rischi diversi.', text: 'Impiantisti, progettisti, imprese e privati temono cose diverse. Per questo abbiamo costruito messaggi distinti invece di parlare a tutti allo stesso modo.' },
+            { lead: 'Meta: la competenza mostrata mentre succede.', text: 'Contenuti che partono dai problemi reali del cantiere, non dal catalogo: il pezzo che manca sempre, cosa cambia quando lavori su un’isola, come si prepara un ordine fatto bene. Niente offerte, niente sconti.' },
+            { lead: 'LinkedIn: l’aggiornamento tecnico.', text: 'Articoli e post su normative e incentivi, per diventare la fonte a cui il professionista torna quando qualcosa cambia nel settore.' },
+          ],
+        },
+        {
+          title: 'L’acquisizione',
+          items: [
+            { lead: 'Prima dare, poi chiedere.', text: 'Un percorso di strumenti gratuiti in tre fasi: checklist di cantiere, guida agli impianti in Sardegna, configuratore di kit. Ogni fase si finanzia con i risultati della precedente.' },
+            { lead: 'Campagne Meta e Google.', text: 'Portano questi strumenti davanti ai professionisti giusti e aprono conversazioni già qualificate: il commerciale non chiama a freddo, risponde a una richiesta.' },
+          ],
+        },
+        {
+          title: 'Il risultato',
+          items: [
+            { lead: 'Un’azienda che sa chi è e a chi parla.', text: 'I contenuti hanno smesso di essere pubblicità e sono diventati la prova di quello che Pusceddu sa fare. Nessuno deve dichiarare che è il partner tecnico di riferimento: si vede.' },
+          ],
+        },
+      ],
+    },
+  },
   { id: 'saltwater', name: 'Saltwater Sardinia', desc: 'Produzione di documentari e strategia di crescita per il personal brand.', tags: ['Comunicazione', 'Sponsorship', 'Documentari TV'], metrics: [{ v: 250000, label: 'Persone raggiunte ogni mese' }, { v: 2700, unit: '€', label: 'Mensili dagli sponsor' }], video: 'saltwater' },
 ]

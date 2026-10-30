@@ -466,16 +466,15 @@ body.is-leaving .page-veil { opacity: 1; transition-duration: 0.35s; }
 em { font-style: normal; }
 
 /* frasi del metodo, fissate a schermo */
-.statement { position: relative; height: 420vh; }
+.statement { position: relative; height: 320vh; }
 .statement__stage { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; align-items: center; overflow: hidden; }
 .statement__inner { display: grid; gap: clamp(14px, 2vw, 26px); }
 .statement__line {
   font-family: var(--f-display); font-weight: 500; letter-spacing: -0.04em; line-height: 1.08;
-  font-size: clamp(26px, 4.1vw, 62px); max-width: 22ch;
+  font-size: clamp(26px, 4.1vw, 62px); max-width: 25ch;
 }
-.statement__line:nth-child(2) { max-width: 26ch; }
 .statement__sub { margin-top: clamp(16px, 3vw, 36px); font-size: clamp(17px, 1.5vw, 22px); line-height: 1.5; max-width: 50ch; }
-.statement__sub .rw.is-on { color: var(--ink-2); }
+.statement__sub .rw.is-on { color: #fff; }
 .statement__progress { position: absolute; left: var(--gutter); right: var(--gutter); bottom: 40px; max-width: calc(var(--maxw) - 2 * var(--gutter)); margin: 0 auto; height: 1px; background: var(--line); }
 .statement__progress i { position: absolute; inset: 0; background: rgba(255, 255, 255, 0.5); transform-origin: left; transform: scaleX(0); }
 

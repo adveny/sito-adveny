@@ -684,18 +684,17 @@ em { font-style: normal; }
   -webkit-mask-image: radial-gradient(closest-side, #000 40%, transparent 85%); mask-image: radial-gradient(closest-side, #000 40%, transparent 85%);
 }
 
-/* about — chiusura: power words, una frase alla volta */
-.words { position: relative; height: 340vh; }
+/* about — chiusura: power words sempre visibili, illuminate con lo scroll */
+.words { position: relative; height: 220vh; }
 .words__stage { position: sticky; top: 0; height: 100vh; height: 100svh; display: grid; place-items: center; align-content: center; gap: clamp(36px, 6vh, 64px); overflow: hidden; }
-.words__list { display: grid; place-items: center; }
+.words__list { display: grid; place-items: center; gap: clamp(4px, 0.8vh, 12px); }
 .words__item {
-  grid-area: 1 / 1; text-align: center; padding: 0 var(--gutter);
-  font-family: var(--f-display); font-weight: 500; letter-spacing: -0.05em; line-height: 1.14; font-size: clamp(40px, 8vw, 132px);
+  text-align: center; padding: 0 var(--gutter);
+  font-family: var(--f-display); font-weight: 500; letter-spacing: -0.05em; line-height: 1.12; font-size: clamp(32px, 5.8vw, 96px);
 }
 .words__item .iri { display: inline-block; vertical-align: bottom; }
 .words.is-static { height: auto; }
 .words.is-static .words__stage { position: relative; height: auto; padding: clamp(80px, 14vh, 160px) 0; }
-.words.is-static .words__item { grid-area: auto; }
 
 .manifesto__kicker { display: grid; margin-bottom: 44px; }
 .manifesto__kicker span { font-family: var(--f-display); font-weight: 500; font-size: clamp(42px, 8.4vw, 140px); letter-spacing: -0.055em; line-height: 1.08; }

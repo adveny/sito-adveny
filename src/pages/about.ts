@@ -1,4 +1,4 @@
-import { boot, gsap, SplitText, reduceMotion } from '../core'
+import { boot, gsap, ScrollTrigger, reduceMotion, splitReadable, lightWords } from '../core'
 
 // ============================================================
 // TEAM — avatar in linea bianca: un busto con attorno curve di livello
@@ -89,13 +89,13 @@ const [beamA, beamB] = Array.from(union.querySelectorAll<HTMLElement>('.union__b
 
 // ============================================================
 // CHIUSURA — "Per chi lavora, per chi resta, per chi sogna di tornare":
-// una frase alla volta, ferma a schermo; alla fine compare la CTA
+// tutte le frasi sono sempre visibili e si illuminano parola per parola con lo scroll
 // ============================================================
 const words = document.querySelector<HTMLElement>('[data-words]')!
 const items = Array.from(words.querySelectorAll<HTMLElement>('[data-word-item]'))
-const wordsCta = words.querySelector<HTMLElement>('[data-words-cta]')!
 
 await boot('about')
+const wordTokens = items.flatMap((item) => splitReadable(item))
 
 const drawIO = new IntersectionObserver((entries) => entries.forEach((e) => {
   if (!e.isIntersecting) return
@@ -109,6 +109,7 @@ if (reduceMotion) {
   gsap.set(beamA, { xPercent: -14, yPercent: -8 })
   gsap.set(beamB, { xPercent: 14, yPercent: 8 })
   words.classList.add('is-static')
+  lightWords(wordTokens, 1)
 } else {
   renderMap(0)
   const mapState = { p: 0 }
@@ -121,23 +122,12 @@ if (reduceMotion) {
     .fromTo(beamA, { xPercent: -46, yPercent: -34, scale: 0.72, opacity: 0.6 }, { xPercent: -12, yPercent: -7, scale: 1, opacity: 1, ease: 'power1.inOut' }, 0)
     .fromTo(beamB, { xPercent: 46, yPercent: 34, scale: 0.72, opacity: 0.6 }, { xPercent: 12, yPercent: 7, scale: 1, opacity: 1, ease: 'power1.inOut' }, 0)
 
-  // le frasi normali salgono lettera per lettera; quella in gradiente si scopre
-  // da sinistra (dividerla in lettere le farebbe perdere il colore)
-  const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } })
-  items.forEach((item, i) => {
-    const iri = item.querySelector<HTMLElement>('.iri')
-    const chars = iri ? null : SplitText.create(item, { type: 'words,chars', mask: 'words', wordsClass: 'split-word' }).chars
-    const at = i * 2
-    if (chars) tl.fromTo(chars, { yPercent: 120 }, { yPercent: 0, duration: 1, stagger: { amount: 0.35 } }, at)
-    else tl.fromTo(iri, { clipPath: 'inset(-10% 100% -10% 0%)', x: -30 }, { clipPath: 'inset(-10% 0% -10% 0%)', x: 0, duration: 1.2 }, at)
-    // le prime due escono verso l'alto per lasciare posto alla successiva
-    if (chars && i < items.length - 1) tl.to(chars, { yPercent: -120, duration: 0.8, stagger: { amount: 0.25 }, ease: 'power3.in' }, at + 1.3)
-  })
-  tl.fromTo(wordsCta, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.8 }, items.length * 2 - 0.6)
-  tl.to({}, { duration: 0.8 })
-  gsap.to(tl, {
-    progress: 1, ease: 'none',
-    scrollTrigger: { trigger: words, start: 'top 60%', end: 'bottom bottom', scrub: 0.6 },
+  ScrollTrigger.create({
+    trigger: words,
+    start: 'top 55%',
+    end: 'bottom 90%',
+    scrub: 0.4,
+    onUpdate: (st) => lightWords(wordTokens, st.progress),
   })
   // le tre frasi del manifesto si scoprono da sinistra, una per volta, seguendo lo scroll
   document.querySelectorAll<HTMLElement>('[data-manifesto-kicker] span').forEach((el) => {

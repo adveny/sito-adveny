@@ -512,9 +512,9 @@ em { font-style: normal; }
 /* il gradiente è ritagliato sul testo: senza un po' di margine sopra e sotto
    la parte alta della O e le discendenti restavano tagliate */
 .method__verb .iri { display: inline-block; vertical-align: bottom; }
-/* la Λ del logo girata verso il testo, come un ">" */
+/* la Λ del logo capovolta a "V" davanti al verbo */
 .method__mark {
-  display: inline-block; width: 0.6em; height: 0.63em; margin-right: 0.2em;
+  display: inline-block; width: 0.63em; height: 0.6em; margin-right: 0.2em;
   background: currentColor;
   -webkit-mask: url('/img/adveny-mark.svg') center / contain no-repeat;
   mask: url('/img/adveny-mark.svg') center / contain no-repeat;

@@ -443,16 +443,13 @@ body.is-leaving .page-veil { opacity: 1; transition-duration: 0.35s; }
 /* cosa facciamo: elenco servizi */
 .svc-grid { border-top: 1px solid var(--line); }
 .svc-grid li {
+  position: relative;
   display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 20px;
-  padding: clamp(18px, 2.2vw, 28px) 0; border-bottom: 1px solid var(--line);
-  transition: padding 0.45s var(--ease-out);
+  padding: clamp(18px, 2.2vw, 28px) 0;
 }
 .svc-grid small { font-size: 13px; color: var(--ink-3); }
-.svc-grid span { font-family: var(--f-display); font-weight: 500; font-size: clamp(22px, 3vw, 44px); letter-spacing: -0.035em; line-height: 1.1; transition: color 0.3s; }
-.svc-grid li { position: relative; border-bottom: 0; }
+.svc-grid span { font-family: var(--f-display); font-weight: 500; font-size: clamp(22px, 3vw, 44px); letter-spacing: -0.035em; line-height: 1.1; }
 .svc-grid li::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--line-2); transform-origin: left; transform: scaleX(var(--l, 1)); }
-.svc-grid li:hover { padding-left: 12px; }
-.svc-grid li:hover span { color: var(--lavender); }
 @media (max-width: 600px) { .svc-grid li { grid-template-columns: 36px 1fr; } }
 
 /* lettura guidata: parole grigie che si accendono */

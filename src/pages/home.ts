@@ -39,37 +39,6 @@ function initEntryHero() {
     type: 'words', mask: 'words', wordsClass: 'split-word', ignore: '.iri, .split-word-mask',
   }) : null
 
-  // Fascio di luce reattivo al puntatore del mouse
-  const lightEl = (cls: string) => {
-    const el = document.createElement('i')
-    el.className = cls
-    el.setAttribute('aria-hidden', 'true')
-    el.append(document.createElement('b'))
-    return el
-  }
-  const entryLight = [lightEl('static-hero__light'), lightEl('static-hero__tint')]
-  entryHero.prepend(entryLight[0])
-  entryHero.prepend(entryLight[1])
-
-  const setEntryLight = (on: boolean) => entryLight.forEach((el) => el.classList.toggle('is-on', on))
-  if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
-    const ease = reduceMotion ? 0.01 : 0.85
-    const xTo = gsap.quickTo(entryLight, 'x', { duration: ease, ease: 'power3' })
-    const yTo = gsap.quickTo(entryLight, 'y', { duration: ease, ease: 'power3' })
-    entryHero.addEventListener('pointerenter', (e) => {
-      const rect = entryHero.getBoundingClientRect()
-      xTo(e.clientX - rect.left, e.clientX - rect.left)
-      yTo(e.clientY - rect.top, e.clientY - rect.top)
-      setEntryLight(true)
-    })
-    entryHero.addEventListener('pointermove', (e) => {
-      const rect = entryHero.getBoundingClientRect()
-      xTo(e.clientX - rect.left)
-      yTo(e.clientY - rect.top)
-    })
-    entryHero.addEventListener('pointerleave', () => setEntryLight(false))
-  }
-
   // Sequenza di entrata cinematica all'avvio
   if (!reduceMotion) {
     const entryTl = gsap.timeline({ delay: 0.25, defaults: { ease: 'power3.out' } })
@@ -295,8 +264,9 @@ if (reduceMotion) {
     },
   })
 }
-// passando col mouse sulla hero si accende un fascio di luce come quelle di
-// sfondo; sta sotto keyword e logo, che sopra la luce si invertono (difference)
+// passando col mouse sulle sezioni hero (static-hero + ecosistema) si accende
+// un unico fascio di luce continuo come quelle di sfondo; sta sotto keyword e
+// logo, che sopra la luce si invertono (difference), senza mai spezzarsi tra le sezioni
 const stage = hero.querySelector<HTMLElement>('.hero__stage')!
 const lightEl = (cls: string) => {
   const el = document.createElement('i')
@@ -308,34 +278,65 @@ const lightEl = (cls: string) => {
 const cursorLight = [lightEl('hero__light'), lightEl('hero__tint')]
 stage.prepend(cursorLight[0])
 ecoEl.after(cursorLight[1])
-const setLight = (on: boolean) => cursorLight.forEach((el) => el.classList.toggle('is-on', on))
+let lightOn = false
+const setLight = (on: boolean) => {
+  if (lightOn === on) return
+  lightOn = on
+  cursorLight.forEach((el) => el.classList.toggle('is-on', on))
+}
 if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
   const ease = reduceMotion ? 0.01 : 0.9
-  const xTo = gsap.quickTo(cursorLight, 'x', { duration: ease, ease: 'power3' })
-  const yTo = gsap.quickTo(cursorLight, 'y', { duration: ease, ease: 'power3' })
-  stage.addEventListener('pointerenter', (e) => {
-    // se era spento nasce sotto il puntatore, altrimenti continua a seguirlo
-    if (!cursorLight[0].classList.contains('is-on')) {
+  const pos = { x: 0, y: 0 }
+  const xTo = gsap.quickTo(pos, 'x', { duration: ease, ease: 'power3' })
+  const yTo = gsap.quickTo(pos, 'y', { duration: ease, ease: 'power3' })
+  let px = 0, py = 0, stretch = 0, angle = 0
+  let lastClientY = 0
+  let inWindow = false
+
+  const syncLightPos = () => {
+    const rect = stage.getBoundingClientRect()
+    gsap.set(cursorLight, {
+      x: pos.x - rect.left,
+      y: pos.y - rect.top,
+      rotation: angle,
+      scaleX: 1 + stretch,
+      scaleY: 1 - stretch * 0.45,
+    })
+  }
+
+  window.addEventListener('pointermove', (e) => {
+    lastClientY = e.clientY
+    const inZone = e.clientY <= hero.getBoundingClientRect().bottom
+    if (!inWindow || (!lightOn && inZone)) {
       xTo(e.clientX, e.clientX)
       yTo(e.clientY, e.clientY)
+      px = e.clientX
+      py = e.clientY
+      syncLightPos()
+    } else {
+      xTo(e.clientX)
+      yTo(e.clientY)
     }
-    setLight(true)
+    inWindow = true
+    setLight(inZone)
+    if (reduceMotion) syncLightPos()
+  }, { passive: true })
+
+  document.addEventListener('pointerleave', () => {
+    inWindow = false
+    setLight(false)
   })
-  stage.addEventListener('pointermove', (e) => {
-    xTo(e.clientX)
-    yTo(e.clientY)
-  })
-  stage.addEventListener('pointerleave', () => setLight(false))
+
   // effetto liquido: la luce si allunga nella direzione in cui si muove
+  // e resta ancorata al puntatore nel viewport anche durante lo scroll tra le sezioni
   if (!reduceMotion) {
-    let px = 0, py = 0, stretch = 0, angle = 0
     gsap.ticker.add(() => {
-      if (!heroVisible) return
-      const x = gsap.getProperty(cursorLight[0], 'x') as number
-      const y = gsap.getProperty(cursorLight[0], 'y') as number
-      const dx = x - px, dy = y - py
-      px = x
-      py = y
+      const heroBottom = hero.getBoundingClientRect().bottom
+      if (inWindow) setLight(lastClientY <= heroBottom)
+      if (heroBottom < -innerHeight * 0.5) return
+      const dx = pos.x - px, dy = pos.y - py
+      px = pos.x
+      py = pos.y
       const speed = Math.hypot(dx, dy)
       // la forma è simmetrica: basta ruotare di al massimo 90° verso la nuova direzione
       if (speed > 0.5) {
@@ -344,15 +345,20 @@ if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
         angle += diff * 0.15
       }
       stretch += (Math.min(speed / 40, 0.45) - stretch) * 0.12
-      gsap.set(cursorLight, { rotation: angle, scaleX: 1 + stretch, scaleY: 1 - stretch * 0.45 })
+      syncLightPos()
     })
+  } else {
+    window.addEventListener('scroll', () => {
+      const heroBottom = hero.getBoundingClientRect().bottom
+      if (inWindow) setLight(lastClientY <= heroBottom)
+      if (heroBottom >= -innerHeight * 0.5) syncLightPos()
+    }, { passive: true })
   }
 }
 
 // gli anelli girano solo quando la hero è visibile
 new IntersectionObserver(([e]) => {
   heroVisible = e.isIntersecting
-  if (!e.isIntersecting) setLight(false)
 }).observe(hero)
 
 // ============================================================

@@ -57,6 +57,7 @@ body {
   font-variant-ligatures: no-common-ligatures;
   font-feature-settings: 'liga' 0, 'clig' 0;
   overflow-x: hidden;
+  overflow-x: clip;
 }
 img, video, canvas, svg { display: block; max-width: 100%; }
 a { color: inherit; text-decoration: none; }
@@ -279,7 +280,7 @@ body.is-leaving .page-veil { opacity: 1; transition-duration: 0.35s; }
    HOME — hero
    ============================================================ */
 .hero { position: relative; height: 600vh; }
-.hero__stage { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; display: grid; place-items: center; }
+.hero__stage { position: sticky; top: 0; height: 100vh; height: 100svh; display: grid; place-items: center; }
 /* fascio di luce che segue il mouse (home.ts), in due strati:
    - .hero__light, sotto le scritte: la luce in scala di grigi (stessa luminosità di --bloom).
      Keyword e logo ci passano sopra in difference e si invertono solo di luminosità;
@@ -368,35 +369,10 @@ body.is-leaving .page-veil { opacity: 1; transition-duration: 0.35s; }
   min-height: 100vh; min-height: 100svh;
   display: flex; align-items: center;
   padding: 140px 0 100px;
-  overflow: hidden;
 }
 .static-hero .wrap { position: relative; z-index: 2; }
 .static-hero .hero__hint {
   position: absolute; left: 50%; bottom: 32px; transform: translateX(-50%); z-index: 2;
-}
-.static-hero__light, .static-hero__tint {
-  position: absolute; left: 0; top: 0; width: 24vmax; height: 24vmax; margin: -12vmax 0 0 -12vmax;
-  pointer-events: none; opacity: 0; transition: opacity 0.9s var(--ease); will-change: transform, opacity;
-}
-.static-hero__light.is-on, .static-hero__tint.is-on { opacity: 0.9; }
-.static-hero__tint { z-index: 3; mix-blend-mode: color; }
-.static-hero__light b, .static-hero__tint b {
-  position: absolute; inset: 8%; display: block;
-  border-radius: 46% 54% 58% 42% / 44% 40% 60% 56%;
-  filter: blur(22px);
-  animation: blob 9s ease-in-out infinite alternate;
-}
-.static-hero__tint b {
-  background: radial-gradient(closest-side,
-    #e6e4ee 0%, #d6cff0 24%, #b49af0 42%, #9a55f0 56%, rgb(140 12 234 / 0.85) 68%, rgb(140 12 234 / 0.4) 84%, transparent 100%);
-}
-.static-hero__light b {
-  background: radial-gradient(closest-side,
-    rgb(229 229 229) 0%, rgb(213 213 213) 24%, rgb(171 171 171) 42%, rgb(123 123 123) 56%, rgb(75 75 75 / 0.85) 68%, rgb(75 75 75 / 0.4) 84%, transparent 100%);
-}
-.static-hero__light b::after {
-  content: ''; position: absolute; inset: 0; border-radius: inherit; mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 .static-hero__grid { display: grid; gap: 32px; }
 /* badge a pillola hero */
@@ -459,7 +435,7 @@ body.is-leaving .page-veil { opacity: 1; transition-duration: 0.35s; }
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .static-hero__light b, .static-hero__tint b, .hero-badge__dot::after { animation: none; }
+  .hero-badge__dot::after { animation: none; }
 }
 .static-hero .display { max-width: 13ch; }
 .static-hero__row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 32px 60px; margin-top: 12px; }

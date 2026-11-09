@@ -18,6 +18,7 @@ interface AnswersPayload {
   telefono?: string
   settore?: string
   team?: string
+  gestione_marketing?: string
   acquisizione?: string | string[]
   retention?: string | string[]
   asset?: string | string[]
@@ -25,7 +26,9 @@ interface AnswersPayload {
   miglioramento?: string | string[]
   priorita?: string
   obiettivi?: string | string[]
+  budget?: string
   fase?: string
+  fatturato?: string
   racconto?: string
   privacy?: string
   score?: number
@@ -137,7 +140,10 @@ function generateCustomerPlainText(data: AnswersPayload, score: number, fascia: 
   const azienda = (data.azienda || '').trim() || 'la tua azienda'
   const settore = formatList(data.settore)
   const team = formatList(data.team)
+  const gestioneMarketing = formatList(data.gestione_marketing)
   const fase = formatList(data.fase)
+  const fatturato = formatList(data.fatturato)
+  const budget = formatList(data.budget)
   const acquisizione = formatList(data.acquisizione)
   const retention = formatList(data.retention)
   const asset = formatList(data.asset)
@@ -163,7 +169,10 @@ LE TUE RISPOSTE
 
 Settore: ${settore}
 Team: ${team}
+Gestione marketing: ${gestioneMarketing}
 Fase dell'attività: ${fase}
+Fascia di fatturato: ${fatturato}
+Budget per crescere: ${budget}
 Come arrivano i nuovi clienti: ${acquisizione}
 Come mantieni il rapporto con loro: ${retention}
 Strumenti che hai: ${asset}
@@ -208,7 +217,10 @@ function generateCustomerEmailHtml(data: AnswersPayload, score: number, fascia: 
   const azienda = (data.azienda || '').trim() || 'la tua azienda'
   const settore = formatList(data.settore)
   const team = formatList(data.team)
+  const gestioneMarketing = formatList(data.gestione_marketing)
   const fase = formatList(data.fase)
+  const fatturato = formatList(data.fatturato)
+  const budget = formatList(data.budget)
   const acquisizione = formatList(data.acquisizione)
   const retention = formatList(data.retention)
   const asset = formatList(data.asset)
@@ -287,7 +299,10 @@ function generateCustomerEmailHtml(data: AnswersPayload, score: number, fascia: 
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size: 14px; line-height: 1.6; background-color: #18152b; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); overflow: hidden;">
                   <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); width: 45%; vertical-align: top;"><strong style="color: #ffffff;">Settore:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${settore}</td></tr>
                   <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Team:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${team}</td></tr>
+                  <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Gestione marketing:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${gestioneMarketing}</td></tr>
                   <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Fase dell'attività:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${fase}</td></tr>
+                  <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Fascia di fatturato:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${fatturato}</td></tr>
+                  <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Budget per crescere:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${budget}</td></tr>
                   <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Come arrivano i nuovi clienti:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${acquisizione}</td></tr>
                   <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Come mantieni il rapporto con loro:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${retention}</td></tr>
                   <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Strumenti che hai:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${asset}</td></tr>
@@ -420,7 +435,10 @@ function generateInternalNotificationHtml(data: AnswersPayload, score: number, f
     <table style="width: 100%; font-size: 13px; border-collapse: collapse;" cellspacing="0" cellpadding="8" border="1" bordercolor="#eee">
       <tr><td style="background: #fafafa; width: 40%;"><strong>Settore</strong></td><td>${formatList(data.settore)}</td></tr>
       <tr><td style="background: #fafafa;"><strong>Team</strong></td><td>${formatList(data.team)}</td></tr>
+      <tr><td style="background: #fafafa;"><strong>Gestione marketing</strong></td><td>${formatList(data.gestione_marketing)}</td></tr>
       <tr><td style="background: #fafafa;"><strong>Fase dell'attività</strong></td><td>${formatList(data.fase)}</td></tr>
+      <tr><td style="background: #fafafa;"><strong>Fascia di fatturato</strong></td><td>${formatList(data.fatturato)}</td></tr>
+      <tr><td style="background: #fafafa;"><strong>Budget per crescere</strong></td><td>${formatList(data.budget)}</td></tr>
       <tr><td style="background: #fafafa;"><strong>Canali di acquisizione</strong></td><td>${formatList(data.acquisizione)}</td></tr>
       <tr><td style="background: #fafafa;"><strong>Fidelizzazione (retention)</strong></td><td>${formatList(data.retention)}</td></tr>
       <tr><td style="background: #fafafa;"><strong>Strumenti che ha</strong></td><td>${formatList(data.asset)}</td></tr>

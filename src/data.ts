@@ -7,6 +7,7 @@ type Icon = keyof typeof ICONS
 export type Question =
   | { key: string; label: string; icon: Icon; hint?: string; type: 'sector'; options: Opt[] }
   | { key: string; label: string; icon: Icon; hint?: string; type: 'slider'; options: string[] }
+  | { key: string; label: string; icon: Icon; hint?: string; type: 'range'; min: number; max: number; step: number; unit: string; minLabel?: string; maxLabel?: string; defaultValue?: number }
   | { key: string; label: string; icon: Icon; hint?: string; type: 'multi' | 'single'; options: string[]; max?: number }
   | { key: string; label: string; icon: Icon; hint?: string; type: 'textarea'; optional?: boolean; placeholder: string }
   | { key: string; type: 'form'; label?: string; icon?: Icon; hint?: string; fields: { key: string; placeholder: string; type: string; autoComplete: string }[] }
@@ -29,22 +30,29 @@ export const SECTORS: Opt[] = [
 export const STEPS: Step[] = [
   {
     title: 'La tua attività',
-    subtitle: 'Partiamo dalle basi. Dicci in che settore operi e quanto è grande il tuo team oggi.',
+    subtitle: 'Partiamo dalle basi. Seleziona il tuo settore e la dimensione del tuo team.',
     transition: 'Dato acquisito. Analizziamo i tuoi canali.',
     icon: 'compass',
     questions: [
-      { key: 'settore', icon: 'layers', label: 'In quale settore opera la tua azienda o attività?', type: 'sector', options: SECTORS },
+      { key: 'settore', icon: 'layers', label: 'In quale settore operi?', type: 'sector', options: SECTORS },
       { key: 'team', icon: 'team', label: 'Quante persone lavorano nella tua azienda?', type: 'slider', options: ['Solo io', '2–5', '6–15', '16–50', '50+'] },
+      {
+        key: 'gestione_marketing',
+        icon: 'bullhorn',
+        label: 'Come gestisci il marketing?',
+        type: 'single',
+        options: ['Io da solo', 'Ho una figura dedicata', 'Non ho nessuno che se ne occupa', 'Mi affido ad agenzie'],
+      },
     ],
   },
   {
     title: 'I tuoi clienti',
-    subtitle: 'Capire da dove arrivano e cosa succede dopo il primo acquisto ci dice molto sul tuo potenziale.',
-    transition: 'Acquisito. Ora vediamo cosa hai in mano.',
+    subtitle: 'Seleziona come acquisisci nuovi clienti e come gestisci il rapporto con loro',
+    transition: 'Acquisito. Ora gli strumenti che utilizzi.',
     icon: 'magnet',
     questions: [
       {
-        key: 'acquisizione', icon: 'funnel', label: 'Come arrivano i tuoi nuovi clienti?', hint: 'Seleziona tutte le voci che ti riguardano.', type: 'multi',
+        key: 'acquisizione', icon: 'funnel', label: 'Da dove arrivano i tuoi nuovi clienti?', hint: 'Seleziona tutte le voci che ti riguardano.', type: 'multi',
         options: ['Passaparola', 'Mi trovano su Google', 'Social media', 'Pubblicità (online o offline)', 'Fiere, eventi, mercati', 'Collaborazioni con altre attività', 'Portali e piattaforme', 'Non lo so con certezza'],
       },
       {
@@ -55,8 +63,8 @@ export const STEPS: Step[] = [
   },
   {
     title: 'I tuoi strumenti',
-    subtitle: 'Mappiamo quello che hai già e quello che stai usando attivamente. Due cose diverse.',
-    transition: 'Strumenti mappati. Analizziamo il tuo metodo.',
+    subtitle: 'Mappiamo quello che hai già e come lo stai usando.',
+    transition: 'Strumenti mappati. Ora analizziamo il tuo metodo.',
     icon: 'tools',
     questions: [
       {
@@ -71,7 +79,7 @@ export const STEPS: Step[] = [
   },
   {
     title: 'Il tuo metodo',
-    subtitle: 'Il modo in cui migliori ciò che offri determina quanto velocemente puoi crescere.',
+    subtitle: 'Il modo in cui migliori la tua offerta determina quanto velocemente puoi crescere.',
     transition: 'Metodo registrato. Ora guardiamo avanti.',
     icon: 'loop',
     questions: [
@@ -83,8 +91,8 @@ export const STEPS: Step[] = [
   },
   {
     title: 'La tua direzione',
-    subtitle: "Sapere cosa conta davvero per te e dove vuoi arrivare cambia tutto nell'analisi.",
-    transition: "Obiettivi acquisiti. Ultimi dati per completare l'analisi.",
+    subtitle: 'Sapere cosa conta davvero per te e dove vuoi arrivare cambia tutto nell’analisi.',
+    transition: 'Obiettivi acquisiti. Ultimi dati per completare l’analisi.',
     icon: 'target',
     questions: [
       {
@@ -95,17 +103,38 @@ export const STEPS: Step[] = [
         key: 'obiettivi', icon: 'flag', label: 'Quali obiettivi vuoi raggiungere nei prossimi 12 mesi?', hint: 'Seleziona fino a 3 obiettivi.', type: 'multi', max: 3,
         options: ['Acquisire più clienti nuovi', 'Fidelizzare i clienti che ho già', 'Aumentare il valore per cliente', 'Costruire un brand riconoscibile', 'Automatizzare i processi', 'Espandermi (sede, mercato, online)', 'Più tempo libero senza perdere fatturato'],
       },
+      {
+        key: 'budget',
+        icon: 'wallet',
+        label: 'Quanto budget sei disposto ad investire per crescere?',
+        hint: 'Sposta lo slider per definire il budget annuale (in unità di 1.000 €).',
+        type: 'range',
+        min: 10,
+        max: 100,
+        step: 1,
+        unit: 'k / anno',
+        minLabel: '10k / anno',
+        maxLabel: '100k / anno',
+        defaultValue: 25,
+      },
     ],
   },
   {
     title: 'La tua dimensione',
-    subtitle: 'Ogni fase di crescita ha le sue leve. Dicci dove sei oggi.',
+    subtitle: 'Ogni azienda attraversa diverse fasi di vita',
     transition: 'Analisi quasi completa. Un ultimo passaggio.',
     icon: 'chart',
     questions: [
       {
         key: 'fase', icon: 'stairs', label: 'In che fase si trova la tua attività?', hint: "Non c'è una risposta giusta — ogni fase ha il suo potenziale.", type: 'single',
         options: ['Sto avviando (primi clienti, tutto da costruire)', "Sto costruendo (il lavoro c'è, devo strutturarmi)", 'Sto crescendo (funziona, voglio accelerare)', 'Mi sto consolidando (proteggere e ottimizzare)', 'Sto scalando (è il momento del salto)'],
+      },
+      {
+        key: 'fatturato',
+        icon: 'coins',
+        label: 'In quale fascia ricade il tuo fatturato?',
+        type: 'slider',
+        options: ['0 – 250.000 €', '250k – 500k', '500k – 1.000.000', '1.000.000 – 4 milioni', '+ di 4 milioni'],
       },
       {
         key: 'racconto', icon: 'chat', label: 'Raccontaci la tua azienda', hint: "Facoltativo. Ci aiuta a preparare un'analisi più precisa per te.", type: 'textarea', optional: true,

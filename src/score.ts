@@ -11,6 +11,7 @@
 export interface Answers {
   settore?: string
   team?: string
+  gestione_marketing?: string
   acquisizione?: string | string[]
   retention?: string | string[]
   asset?: string | string[]
@@ -18,7 +19,9 @@ export interface Answers {
   miglioramento?: string | string[]
   priorita?: string
   obiettivi?: string | string[]
+  budget?: string
   fase?: string
+  fatturato?: string
   racconto?: string
   nome_cognome?: string
   azienda?: string
@@ -33,76 +36,101 @@ const toArray = (v: unknown): string[] => (Array.isArray(v) ? v : typeof v === '
 export function calculateScore(a: Answers): number {
   let score = 10 // base minima
 
-  // 1. Acquisizione (max 18)
+  // 1. Acquisizione (max 17)
   const acq = toArray(a.acquisizione)
-  if (acq.includes('Non lo so con certezza') || acq.includes('Passaparola') && acq.length <= 2) {
-    score += 18
+  if (acq.includes('Non lo so con certezza') || (acq.includes('Passaparola') && acq.length <= 2)) {
+    score += 17
   } else if (acq.length <= 2) {
-    score += 14
+    score += 13
   } else if (acq.length <= 4) {
-    score += 10
-  } else {
-    score += 6
-  }
-
-  // 2. Fidelizzazione / Retention (max 18)
-  const ret = toArray(a.retention)
-  if (ret.includes('Al momento non faccio molto') || ret.length === 0) {
-    score += 18
-  } else if (ret.includes('Li richiamo o scrivo periodicamente') && ret.length === 1) {
-    score += 14
-  } else if (ret.length <= 2) {
-    score += 11
-  } else {
-    score += 7
-  }
-
-  // 3. Asset / Strumenti (max 18)
-  const ass = toArray(a.asset)
-  if (ass.includes('Nessuno di questi') || ass.length === 0) {
-    score += 18
-  } else if (ass.length === 1 && ass.includes('Profili social attivi')) {
-    score += 16
-  } else if (!ass.includes('Un gestionale o CRM') && !ass.includes('Sistema per raccogliere contatti')) {
-    score += 13
-  } else if (ass.length <= 3) {
-    score += 10
-  } else {
-    score += 6
-  }
-
-  // 4. Attività svolte oggi (max 18)
-  const att = toArray(a.attivita)
-  if (att.includes('Non ho strategie attive') || att.includes('Non ho familiarità con queste attività') || att.length === 0) {
-    score += 18
-  } else if (att.length <= 2) {
-    score += 13
-  } else if (att.length <= 4) {
-    score += 10
-  } else {
-    score += 6
-  }
-
-  // 5. Metodo di miglioramento (max 16)
-  const mig = toArray(a.miglioramento)
-  if (mig.includes('Non ho un metodo preciso') || mig.includes("Mi affido all'intuito e all'esperienza") && mig.length === 1) {
-    score += 16
-  } else if (mig.length <= 2) {
-    score += 12
-  } else {
-    score += 7
-  }
-
-  // 6. Fase e dimensione (max 12)
-  const f = a.fase || ''
-  if (f.startsWith('Sto avviando') || f.startsWith('Sto costruendo')) {
-    score += 12
-  } else if (f.startsWith('Sto crescendo')) {
-    score += 10
-  } else if (f.startsWith('Mi sto consolidando')) {
-    score += 7
+    score += 9
   } else {
     score += 5
+  }
+
+  // 2. Fidelizzazione / Retention (max 17)
+  const ret = toArray(a.retention)
+  if (ret.includes('Al momento non faccio molto') || ret.length === 0) {
+    score += 17
+  } else if (ret.includes('Li richiamo o scrivo periodicamente') && ret.length === 1) {
+    score += 13
+  } else if (ret.length <= 2) {
+    score += 10
+  } else {
+    score += 6
+  }
+
+  // 3. Asset / Strumenti (max 17)
+  const ass = toArray(a.asset)
+  if (ass.includes('Nessuno di questi') || ass.length === 0) {
+    score += 17
+  } else if (ass.length === 1 && ass.includes('Profili social attivi')) {
+    score += 15
+  } else if (!ass.includes('Un gestionale o CRM') && !ass.includes('Sistema per raccogliere contatti')) {
+    score += 12
+  } else if (ass.length <= 3) {
+    score += 9
+  } else {
+    score += 5
+  }
+
+  // 4. Attività svolte oggi (max 17)
+  const att = toArray(a.attivita)
+  if (att.includes('Non ho strategie attive') || att.includes('Non ho familiarità con queste attività') || att.length === 0) {
+    score += 17
+  } else if (att.length <= 2) {
+    score += 12
+  } else if (att.length <= 4) {
+    score += 9
+  } else {
+    score += 5
+  }
+
+  // 5. Metodo di miglioramento (max 14)
+  const mig = toArray(a.miglioramento)
+  if (mig.includes('Non ho un metodo preciso') || (mig.includes("Mi affido all'intuito e all'esperienza") && mig.length === 1)) {
+    score += 14
+  } else if (mig.length <= 2) {
+    score += 10
+  } else {
+    score += 6
+  }
+
+  // 6. Gestione marketing (max 8)
+  const gm = a.gestione_marketing || ''
+  if (gm.includes('Non ho nessuno che se ne occupa')) {
+    score += 8
+  } else if (gm.includes('Io da solo')) {
+    score += 6
+  } else if (gm.includes('Mi affido ad agenzie')) {
+    score += 3
+  } else if (gm.includes('Ho una figura dedicata')) {
+    score += 2
+  }
+
+  // 7. Dimensione e fatturato (max 12)
+  const f = a.fase || ''
+  if (f.startsWith('Sto avviando') || f.startsWith('Sto costruendo')) {
+    score += 7
+  } else if (f.startsWith('Sto crescendo')) {
+    score += 5
+  } else if (f.startsWith('Mi sto consolidando')) {
+    score += 4
+  } else {
+    score += 3
+  }
+
+  const fat = a.fatturato || ''
+  if (fat.includes('0 – 250.000') || fat.includes('0 / 250.000')) {
+    score += 5
+  } else if (fat.includes('250k')) {
+    score += 4
+  } else if (fat.includes('500k')) {
+    score += 3
+  } else if (fat.includes('1.000.000')) {
+    score += 2
+  } else {
+    score += 1
   }
 
   // Clampa tra 0 e 100

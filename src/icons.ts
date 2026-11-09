@@ -36,4 +36,7 @@ export const ICONS = {
   check: svg('<path d="m5 12.5 4.5 4.5L19 7.5"/>'),
   mail: svg('<rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m3.5 7 8.5 6.5L20.5 7"/>'),
   calendar: svg('<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9.5 15 1.8 1.8 3.4-3.6"/>'),
+  bullhorn: svg('<path d="M3 11V8a1 1 0 0 1 1-1h2l5-3v14l-5-3H4a1 1 0 0 1-1-1v-3z"/><path d="M14 9a4 4 0 0 1 0 6"/><path d="M17 6.5a7 7 0 0 1 0 11"/>'),
+  wallet: svg('<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18"/><path d="M15 13.5h2"/>'),
+  coins: svg('<circle cx="9" cy="9" r="6"/><path d="M18.1 10.4A6 6 0 1 1 10.4 18"/>'),
 }

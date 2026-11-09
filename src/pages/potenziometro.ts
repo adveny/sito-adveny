@@ -12,7 +12,11 @@ const bar = document.querySelector<HTMLElement>('[data-pz-bar]')!
 const meter = document.querySelector<HTMLElement>('[data-pz-meter]')!
 const overlay = document.querySelector<HTMLElement>('[data-pz-transition]')!
 
-const answers: Answers = { team: 'Solo io' }
+const answers: Answers = {
+  team: 'Solo io',
+  budget: '25.000 € / anno',
+  fatturato: '0 – 250.000 €',
+}
 // 7 step (sezioni); dentro ogni step le domande arrivano una alla volta
 let step = 0
 let qi = 0
@@ -37,6 +41,7 @@ const current = () => STEPS[step].questions[qi]
 function isComplete(q: Question = current()) {
   if (q.type === 'textarea') return !!q.optional || filled(answers[q.key])
   if (q.type === 'form') return q.fields.every((f) => filled(answers[f.key])) && answers.privacy === 'sì'
+  if (q.type === 'slider' || q.type === 'range') return true
   return filled(answers[q.key])
 }
 
@@ -51,11 +56,36 @@ function renderQuestion(q: Question) {
         <span class="opt__icon">${ICONS[o.icon]}</span><span class="opt__label">${o.label}</span><span class="opt__check">${ICONS.check}</span>
       </button>`).join('')}</div>`
   } else if (q.type === 'slider') {
-    const i = Math.max(0, q.options.indexOf(String(answers[q.key] ?? q.options[0])))
+    const def = q.options[0]
+    if (!answers[q.key]) answers[q.key] = def
+    const i = Math.max(0, q.options.indexOf(String(answers[q.key] ?? def)))
     const fill = (i / (q.options.length - 1)) * 100
-    body = `<div class="slider" data-slider="${q.key}">
+    body = `<div class="slider" data-slider="${q.key}" style="--cols: ${q.options.length}">
       <div class="slider__labels">${q.options.map((o, j) => `<button type="button" class="${j === i ? 'is-selected' : ''}" data-slide="${j}">${o}</button>`).join('')}</div>
       <input type="range" min="0" max="${q.options.length - 1}" value="${i}" aria-label="${q.label}" style="--fill:${fill}%" />
+    </div>`
+  } else if (q.type === 'range') {
+    const min = q.min
+    const max = q.max
+    const stepVal = q.step
+    const raw = typeof answers[q.key] === 'string' ? parseInt((answers[q.key] as string).replace(/\D/g, ''), 10) : NaN
+    const val = !isNaN(raw) && raw >= min && raw <= max ? raw : (q.defaultValue ?? 25)
+    answers[q.key] = `${val}.000 € / anno`
+    const fill = ((val - min) / (max - min)) * 100
+    const presets = [10, 25, 50, 75, 100]
+    body = `<div class="range" data-range="${q.key}">
+      <div class="range__hero">
+        <strong class="range__val" data-range-val>${val}.000 €</strong>
+        <span class="range__sub">/ anno</span>
+      </div>
+      <input type="range" min="${min}" max="${max}" step="${stepVal}" value="${val}" aria-label="${q.label}" style="--fill:${fill}%" />
+      <div class="range__bounds">
+        <span>${q.minLabel ?? `${min}k / anno`}</span>
+        <span>${q.maxLabel ?? `${max}k / anno`}</span>
+      </div>
+      <div class="range__presets">
+        ${presets.map((p) => `<button type="button" class="range__pill ${p === val ? 'is-selected' : ''}" data-range-pill="${p}">${p}k</button>`).join('')}
+      </div>
     </div>`
   } else if (q.type === 'multi' || q.type === 'single') {
     const cur = answers[q.key]
@@ -105,7 +135,7 @@ function cardHTML() {
 
 const animateOptions = () => {
   if (reduceMotion) return
-  gsap.from(main.querySelectorAll('.opt, .slider__labels button, .field'), { y: 10, opacity: 0, duration: 0.6, stagger: 0.02, delay: 0.1, ease: 'expo.out' })
+  gsap.from(main.querySelectorAll('.opt, .slider__labels button, .field, .range__hero, .range input, .range__bounds, .range__presets button'), { y: 10, opacity: 0, duration: 0.6, stagger: 0.02, delay: 0.1, ease: 'expo.out' })
 }
 
 function renderStep(dir = 1) {
@@ -204,6 +234,8 @@ function bind() {
     }
     const slide = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-slide]')
     if (slide) setSlider(slide.closest<HTMLElement>('[data-slider]')!, Number(slide.dataset.slide))
+    const pill = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-range-pill]')
+    if (pill) setRange(pill.closest<HTMLElement>('[data-range]')!, Number(pill.dataset.rangePill))
     if ((e.target as HTMLElement).closest('[data-back]')) back()
   })
 
@@ -212,6 +244,8 @@ function bind() {
     const t = e.target as HTMLInputElement
     const slider = t.closest<HTMLElement>('[data-slider]')
     if (slider && t.type === 'range') return setSlider(slider, Number(t.value))
+    const range = t.closest<HTMLElement>('[data-range]')
+    if (range && t.type === 'range') return setRange(range, Number(t.value))
     if (t.dataset.text) {
       answers[t.dataset.text] = t.value
       refreshNext()
@@ -256,6 +290,24 @@ function setSlider(wrap: HTMLElement, i: number) {
   refreshNext()
 }
 
+function setRange(wrap: HTMLElement, val: number) {
+  const key = wrap.dataset.range!
+  const q = current()
+  if (q.type !== 'range' || q.key !== key) return
+  val = Math.min(q.max, Math.max(q.min, Math.round(val / q.step) * q.step))
+  answers[key] = `${val}.000 € / anno`
+  const input = wrap.querySelector('input')!
+  input.value = String(val)
+  const fill = ((val - q.min) / (q.max - q.min)) * 100
+  input.style.setProperty('--fill', `${fill}%`)
+  const display = wrap.querySelector<HTMLElement>('[data-range-val]')
+  if (display) display.textContent = `${val}.000 €`
+  wrap.querySelectorAll<HTMLButtonElement>('[data-range-pill]').forEach((b) => {
+    b.classList.toggle('is-selected', Number(b.dataset.rangePill) === val)
+  })
+  refreshNext()
+}
+
 function go(dir: 1 | -1) {
   if (busy) return
   const leaving = STEPS[step]
@@ -292,10 +344,11 @@ async function showResult() {
   const score = calculateScore(answers)
   const fascia = getFascia(score)
 
+  const isPreview = new URLSearchParams(location.search).has('risultato')
   const apiUrl =
     (import.meta.env.VITE_POTENZIOMETRO_API_URL as string) ||
     'https://adveny-potenziometro-brevo.adveny.workers.dev'
-  const sendPromise = apiUrl
+  const sendPromise = apiUrl && !isPreview
     ? fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -306,9 +359,11 @@ async function showResult() {
     : Promise.resolve()
 
   // Attende sia l'animazione di transizione sia l'invio (con timeout di salvaguardia a 4s)
-  const minTime = new Promise((resolve) => setTimeout(resolve, 1400))
-  const maxTimeout = new Promise((resolve) => setTimeout(resolve, 4000))
-  await Promise.all([minTime, Promise.race([sendPromise, maxTimeout])])
+  if (!isPreview) {
+    const minTime = new Promise((resolve) => setTimeout(resolve, 1400))
+    const maxTimeout = new Promise((resolve) => setTimeout(resolve, 4000))
+    await Promise.all([minTime, Promise.race([sendPromise, maxTimeout])])
+  }
 
   overlay.classList.remove('is-on')
   step = STEPS.length - 1
@@ -327,7 +382,39 @@ async function showResult() {
         <strong><span data-score>0</span><small>%</small></strong>
       </div>
       <h1 class="h2" tabindex="-1" data-title>${fascia.titolo}</h1>
-      <p class="lead" style="max-width: 52ch">${fascia.testo}</p>
+      <p class="lead" style="max-width: 58ch">Questo è un punteggio iniziale basato su 6 aree chiave: acquisizione, fidelizzazione, strumenti, metodo, strategia e visione.</p>
+      <p class="pz__fascia-desc" style="max-width: 54ch">${fascia.testo}</p>
+
+      <!-- TRACKER 3 PUNTI CON SLIDER LUMINOSO (1 su 3 completato) -->
+      <div class="pz__roadmap glass" aria-label="Avanzamento del percorso">
+        <div class="pz__roadmap-track">
+          <div class="pz__roadmap-fill" data-roadmap-fill style="width: 33%"></div>
+        </div>
+        <div class="pz__roadmap-steps">
+          <div class="pz__roadmap-step is-done">
+            <span class="pz__roadmap-dot"><span class="pz__roadmap-check">${ICONS.check}</span></span>
+            <div class="pz__roadmap-info">
+              <strong class="pz__roadmap-name">Punteggio potenziale</strong>
+              <span class="pz__roadmap-status">Completato</span>
+            </div>
+          </div>
+          <div class="pz__roadmap-step is-pending">
+            <span class="pz__roadmap-dot"><span class="pz__roadmap-ring"></span></span>
+            <div class="pz__roadmap-info">
+              <strong class="pz__roadmap-name">Consulenza dedicata</strong>
+              <span class="pz__roadmap-status">Prossimo step</span>
+            </div>
+          </div>
+          <div class="pz__roadmap-step is-future">
+            <span class="pz__roadmap-dot"></span>
+            <div class="pz__roadmap-info">
+              <strong class="pz__roadmap-name">Analisi aziendale</strong>
+              <span class="pz__roadmap-status">Report finale</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <ol class="pz__next">
         <li>
           <span class="pz__next-icon">${ICONS.mail}</span>
@@ -342,6 +429,16 @@ async function showResult() {
     </section>`
   gsap.to(main, { opacity: 1, filter: 'blur(0px)', duration: 0.5 })
   gsap.from(main.querySelector('.pz__result'), { y: 60, scale: 0.95, opacity: 0, duration: 1.2, ease: 'expo.out' })
+  if (!reduceMotion) {
+    gsap.fromTo(
+      main.querySelector('[data-roadmap-fill]'),
+      { width: '0%' },
+      { width: '33%', duration: 1.4, delay: 0.5, ease: 'power2.out' }
+    )
+    gsap.from(main.querySelectorAll('.pz__roadmap-step'), {
+      y: 16, opacity: 0, duration: 0.8, stagger: 0.12, delay: 0.35, ease: 'expo.out'
+    })
+  }
   const ring = main.querySelector<SVGCircleElement>('[data-ring]')!
   const out = main.querySelector<HTMLElement>('[data-score]')!
   const o = { v: 0 }

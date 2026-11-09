@@ -25,19 +25,12 @@ const enterCard = (tl: gsap.core.Timeline, i: number, at: number) => {
 }
 
 // ============================================================
-// OFFERTA — la frase da sola, poi "al costo di un solo dipendente"
-// grande e da solo, poi le due insieme, il sottotesto, i servizi e la CTA
+// OFFERTA — la frase appare tutta insieme, poi il sottotesto, i servizi e la CTA
 // ============================================================
 const offer = document.querySelector<HTMLElement>('[data-offer]')!
 const q = <T extends Element = HTMLElement>(sel: string) => offer.querySelector(sel) as unknown as T
 const offerA = q<HTMLElement>('[data-offer-a]')
 const offerB = q<HTMLElement>('[data-offer-b]')
-const offerStage = q<HTMLElement>('.offer__stage')
-// quanto spostare un elemento per portarlo al centro dello schermo
-const toCenter = (el: HTMLElement) => () => {
-  const r = el.getBoundingClientRect(), st = offerStage.getBoundingClientRect()
-  return st.top + st.height / 2 - (r.top + r.height / 2) - (gsap.getProperty(el, 'y') as number)
-}
 
 if (reduceMotion) {
   offer.classList.add('is-static')
@@ -65,21 +58,14 @@ if (reduceMotion) {
   })
 
   const tl = gsap.timeline({ defaults: { ease: 'power3.out' }, paused: true })
-  tl.set(offerB, { opacity: 0 })
-    .set(offer.querySelectorAll('[data-offer-lead], [data-offer-chips] .chip, [data-offer-cta]'), { opacity: 0 })
-    // 1. "Con Adveny avrai tutto questo," da sola, al centro
-    .fromTo(offerA, { y: toCenter(offerA), opacity: 0, filter: 'blur(10px)' }, { opacity: 1, filter: 'blur(0px)', duration: 1 }, 0)
-    .to(offerA, { opacity: 0, y: () => (toCenter(offerA)() as number) - 60, duration: 0.8, ease: 'power2.in' }, 1.6)
-    // 2. "al costo di un solo dipendente." da solo, grande, con la luce dietro
-    .fromTo(offerB, { y: toCenter(offerB), scale: 1.18, opacity: 1, clipPath: 'inset(-20% 100% -20% 0%)' }, { clipPath: 'inset(-20% 0% -20% 0%)', duration: 1.2 }, 2.4)
-    .fromTo(q('[data-offer-glow]'), { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 1.4 }, 2.5)
-    // 3. le due frasi si ricompongono nella loro posizione
-    .to(offerB, { y: 0, scale: 1, duration: 1, ease: 'power2.inOut' }, 4.4)
-    .fromTo(offerA, { y: -30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.9, immediateRender: false }, 4.8)
-    // 4. il sottotesto, poi i servizi uno dopo l'altro e la CTA
-    .fromTo(q('[data-offer-lead]'), { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.9 }, 5.6)
-    .fromTo(offer.querySelectorAll('[data-offer-chips] .chip'), { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, stagger: 0.12 }, 6.4)
-    .fromTo(q('[data-offer-cta]'), { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 }, 7.3)
+  tl.set(offer.querySelectorAll('[data-offer-lead], [data-offer-chips] .chip, [data-offer-cta]'), { opacity: 0 })
+    // 1. Titolo completo appare insieme con glow
+    .fromTo([offerA, offerB], { y: 32, opacity: 0 }, { y: 0, opacity: 1, duration: 1.2, stagger: 0.08 }, 0)
+    .fromTo(q('[data-offer-glow]'), { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 1.4 }, 0.2)
+    // 2. il sottotesto, poi i servizi uno dopo l'altro e la CTA
+    .fromTo(q('[data-offer-lead]'), { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.9 }, 1.4)
+    .fromTo(offer.querySelectorAll('[data-offer-chips] .chip'), { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, stagger: 0.1 }, 2.0)
+    .fromTo(q('[data-offer-cta]'), { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 }, 2.7)
     .to({}, { duration: 0.6 })
   gsap.to(tl, {
     progress: 1, ease: 'none',
@@ -87,14 +73,31 @@ if (reduceMotion) {
   })
 }
 
-// numero grande che cambia con il servizio in lettura
+// numero grande che si sposta e cambia allineandosi alla card in lettura
+const big = document.querySelector<HTMLElement>('.svc__big')!
 const track = document.querySelector<HTMLElement>('[data-svc-track]')!
-document.querySelectorAll<HTMLElement>('[data-svc]').forEach((el) => {
+const svcCards = Array.from(document.querySelectorAll<HTMLElement>('[data-svc]'))
+let activeSvc = 0
+const syncSvc = (idx: number) => {
+  activeSvc = idx
+  const card = svcCards[idx]
+  if (!card || !big) return
+  const y = Math.max(0, card.offsetTop + (card.offsetHeight - big.offsetHeight) / 2)
+  big.style.transform = `translateY(${y.toFixed(1)}px)`
+  track.style.transform = `translateY(${-idx * 1.15}em)`
+}
+svcCards.forEach((el, i) => {
   ScrollTrigger.create({
-    trigger: el, start: 'top 55%', end: 'bottom 55%',
+    trigger: el, start: 'top 58%', end: 'bottom 58%',
     onToggle: (st) => {
-      if (st.isActive) track.style.transform = `translateY(${-Number(el.dataset.svc) * 1.15}em)`
+      if (st.isActive) syncSvc(i)
     },
   })
 })
-if (reduceMotion) track.style.transition = 'none'
+syncSvc(0)
+ScrollTrigger.addEventListener('refresh', () => syncSvc(activeSvc))
+ScrollTrigger.refresh()
+if (reduceMotion) {
+  big.style.transition = 'none'
+  track.style.transition = 'none'
+}

@@ -15,8 +15,8 @@ export const LEGAL = {
     { nome: 'Michele Pirro', piva: '04089020921', cf: 'PRRMHL98H16B354W' },
   ],
   email: 'info@adveny.it',
-  hosting: 'Vercel Inc. (Stati Uniti)',
-  aggiornata: '25 settembre 2026',
+  hosting: 'GitHub, Inc. (GitHub Pages, Stati Uniti)',
+  aggiornata: '9 novembre 2026',
   gtm: '', // es. 'GTM-ABC1234': vuoto = Tag Manager non viene caricato
 }
 
@@ -128,7 +128,7 @@ const PRIVACY = `
   <p>Oltre a questi fornitori, i dati possono essere comunicati solo alle autorità che ne facciano legittima richiesta.</p>
 
   <h3>8. Trasferimenti fuori dall’Unione europea</h3>
-  <p>Vercel, Google e Meta possono trattare alcuni dati negli Stati Uniti. Tutte e tre aderiscono all’EU-U.S. Data Privacy Framework, riconosciuto adeguato dalla Commissione europea (decisione del 10 luglio 2023), e adottano le Clausole contrattuali standard approvate dalla Commissione.</p>
+  <p>GitHub, Google e Meta possono trattare alcuni dati negli Stati Uniti. Aderiscono all’EU-U.S. Data Privacy Framework, riconosciuto adeguato dalla Commissione europea (decisione del 10 luglio 2023), e adottano le Clausole contrattuali standard approvate dalla Commissione.</p>
 
   <h3>9. Per quanto tempo li teniamo</h3>
   <ul>

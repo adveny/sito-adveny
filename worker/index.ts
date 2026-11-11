@@ -97,42 +97,120 @@ function calculateScore(a: AnswersPayload): number {
   let score = 10
 
   const acq = toArr(a.acquisizione)
-  if (acq.includes('Non lo so con certezza') || (acq.includes('Passaparola') && acq.length <= 2)) score += 18
-  else if (acq.length <= 2) score += 14
-  else if (acq.length <= 4) score += 10
-  else score += 6
-
-  const ret = toArr(a.retention)
-  if (ret.includes('Al momento non faccio molto') || ret.length === 0) score += 18
-  else if (ret.includes('Li richiamo o scrivo periodicamente') && ret.length === 1) score += 14
-  else if (ret.length <= 2) score += 11
-  else score += 7
-
-  const ass = toArr(a.asset)
-  if (ass.includes('Nessuno di questi') || ass.length === 0) score += 18
-  else if (ass.length === 1 && ass.includes('Profili social attivi')) score += 16
-  else if (!ass.includes('Un gestionale o CRM') && !ass.includes('Sistema per raccogliere contatti')) score += 13
-  else if (ass.length <= 3) score += 10
-  else score += 6
-
-  const att = toArr(a.attivita)
-  if (att.includes('Non ho strategie attive') || att.includes('Non ho familiarità con queste attività') || att.length === 0) score += 18
-  else if (att.length <= 2) score += 13
-  else if (att.length <= 4) score += 10
-  else score += 6
-
-  const mig = toArr(a.miglioramento)
-  if (mig.includes('Non ho un metodo preciso') || (mig.includes("Mi affido all'intuito e all'esperienza") && mig.length === 1)) score += 16
-  else if (mig.length <= 2) score += 12
-  else score += 7
-
-  const f = a.fase || ''
-  if (f.startsWith('Sto avviando') || f.startsWith('Sto costruendo')) score += 12
-  else if (f.startsWith('Sto crescendo')) score += 10
-  else if (f.startsWith('Mi sto consolidando')) score += 7
+  if (acq.includes('Non lo so con certezza') || (acq.includes('Passaparola') && acq.length <= 2)) score += 17
+  else if (acq.length <= 2) score += 13
+  else if (acq.length <= 4) score += 9
   else score += 5
 
+  const ret = toArr(a.retention)
+  if (ret.includes('Al momento non faccio molto') || ret.length === 0) score += 17
+  else if (ret.includes('Li richiamo o scrivo periodicamente') && ret.length === 1) score += 13
+  else if (ret.length <= 2) score += 10
+  else score += 6
+
+  const ass = toArr(a.asset)
+  if (ass.includes('Nessuno di questi') || ass.length === 0) score += 17
+  else if (ass.length === 1 && ass.includes('Profili social attivi')) score += 15
+  else if (!ass.includes('Un gestionale o CRM') && !ass.includes('Sistema per raccogliere contatti')) score += 12
+  else if (ass.length <= 3) score += 9
+  else score += 5
+
+  const att = toArr(a.attivita)
+  if (att.includes('Non ho strategie attive') || att.includes('Non ho familiarità con queste attività') || att.length === 0) score += 17
+  else if (att.length <= 2) score += 12
+  else if (att.length <= 4) score += 9
+  else score += 5
+
+  const mig = toArr(a.miglioramento)
+  if (mig.includes('Non ho un metodo preciso') || (mig.includes("Mi affido all'intuito e all'esperienza") && mig.length === 1)) score += 14
+  else if (mig.length <= 2) score += 10
+  else score += 6
+
+  const gm = a.gestione_marketing || ''
+  if (gm.includes('Non ho nessuno che se ne occupa')) score += 8
+  else if (gm.includes('Io da solo')) score += 6
+  else if (gm.includes('Mi affido ad agenzie')) score += 3
+  else if (gm.includes('Ho una figura dedicata')) score += 2
+
+  const f = a.fase || ''
+  if (f.startsWith('Sto avviando') || f.startsWith('Sto costruendo')) score += 7
+  else if (f.startsWith('Sto crescendo')) score += 5
+  else if (f.startsWith('Mi sto consolidando')) score += 4
+  else score += 3
+
+  const fat = a.fatturato || ''
+  if (fat.includes('0 – 250.000') || fat.includes('0 / 250.000')) score += 5
+  else if (fat.includes('250k')) score += 4
+  else if (fat.includes('500k')) score += 3
+  else if (fat.includes('1.000.000')) score += 2
+  else score += 1
+
   return Math.min(100, Math.max(0, Math.round(score)))
+}
+
+const BREVO_TEXT_ATTRIBUTES = [
+  'NOME',
+  'COGNOME',
+  'AZIENDA',
+  'TELEFONO',
+  'FASCIA',
+  'DATA_CONSENSO',
+  'SETTORE',
+  'TEAM',
+  'GESTIONE_MARKETING',
+  'ACQUISIZIONE',
+  'RETENTION',
+  'STRUMENTI',
+  'ATTIVITA',
+  'MIGLIORAMENTO',
+  'PRIORITA',
+  'OBIETTIVI',
+  'BUDGET',
+  'FASE',
+  'FATTURATO',
+  'RACCONTO',
+  'RISPOSTE',
+]
+
+async function ensureBrevoAttributes(apiKey: string): Promise<Record<string, number>> {
+  const results: Record<string, number> = {}
+  await Promise.allSettled(
+    BREVO_TEXT_ATTRIBUTES.map(async (attr) => {
+      const res = await fetch(`https://api.brevo.com/v3/contacts/attributes/normal/${attr}`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'api-key': apiKey,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ type: 'text' }),
+      })
+      results[attr] = res.status
+    })
+  )
+  return results
+}
+
+function formatRisposteSummary(data: AnswersPayload): string {
+  const parts = [
+    `Settore: ${formatList(data.settore)}`,
+    `Team: ${formatList(data.team)}`,
+    `Come gestisci il marketing: ${formatList(data.gestione_marketing)}`,
+    `Da dove arrivano i nuovi clienti: ${formatList(data.acquisizione)}`,
+    `Come mantieni il rapporto: ${formatList(data.retention)}`,
+    `Strumenti che hai: ${formatList(data.asset)}`,
+    `Attività che porti avanti: ${formatList(data.attivita)}`,
+    `Come migliori prodotto/servizio: ${formatList(data.miglioramento)}`,
+    `Priorità di oggi: ${formatList(data.priorita)}`,
+    `Obiettivi a 12 mesi: ${formatList(data.obiettivi)}`,
+    `Budget per crescere: ${formatList(data.budget)}`,
+    `Fase dell'attività: ${formatList(data.fase)}`,
+    `Fascia di fatturato: ${formatList(data.fatturato)}`,
+  ]
+  if (data.racconto && data.racconto.trim()) {
+    parts.push(`Racconto: ${data.racconto.trim()}`)
+  }
+  return parts.join(' | ')
 }
 
 function generateCustomerPlainText(data: AnswersPayload, score: number, fascia: { titolo: string; testo: string }): string {
@@ -141,9 +219,6 @@ function generateCustomerPlainText(data: AnswersPayload, score: number, fascia: 
   const settore = formatList(data.settore)
   const team = formatList(data.team)
   const gestioneMarketing = formatList(data.gestione_marketing)
-  const fase = formatList(data.fase)
-  const fatturato = formatList(data.fatturato)
-  const budget = formatList(data.budget)
   const acquisizione = formatList(data.acquisizione)
   const retention = formatList(data.retention)
   const asset = formatList(data.asset)
@@ -151,6 +226,10 @@ function generateCustomerPlainText(data: AnswersPayload, score: number, fascia: 
   const miglioramento = formatList(data.miglioramento)
   const priorita = formatList(data.priorita)
   const obiettivi = formatList(data.obiettivi)
+  const budget = formatList(data.budget)
+  const fase = formatList(data.fase)
+  const fatturato = formatList(data.fatturato)
+  const racconto = (data.racconto || '').trim()
 
   return `Ciao ${nome},
 
@@ -169,17 +248,17 @@ LE TUE RISPOSTE
 
 Settore: ${settore}
 Team: ${team}
-Gestione marketing: ${gestioneMarketing}
-Fase dell'attività: ${fase}
-Fascia di fatturato: ${fatturato}
-Budget per crescere: ${budget}
-Come arrivano i nuovi clienti: ${acquisizione}
+Come gestisci il marketing: ${gestioneMarketing}
+Da dove arrivano i nuovi clienti: ${acquisizione}
 Come mantieni il rapporto con loro: ${retention}
 Strumenti che hai: ${asset}
 Attività che porti avanti: ${attivita}
 Come migliori il tuo prodotto o servizio: ${miglioramento}
 Priorità di oggi: ${priorita}
 Obiettivi a 12 mesi: ${obiettivi}
+Quanto budget sei disposto ad investire per crescere: ${budget}
+Fase dell'attività: ${fase}
+Fascia di fatturato: ${fatturato}${racconto ? `\nRaccontaci la tua azienda: ${racconto}` : ''}
 
 
 DA QUI PARTE L'ANALISI VERA
@@ -218,9 +297,6 @@ function generateCustomerEmailHtml(data: AnswersPayload, score: number, fascia: 
   const settore = formatList(data.settore)
   const team = formatList(data.team)
   const gestioneMarketing = formatList(data.gestione_marketing)
-  const fase = formatList(data.fase)
-  const fatturato = formatList(data.fatturato)
-  const budget = formatList(data.budget)
   const acquisizione = formatList(data.acquisizione)
   const retention = formatList(data.retention)
   const asset = formatList(data.asset)
@@ -228,6 +304,10 @@ function generateCustomerEmailHtml(data: AnswersPayload, score: number, fascia: 
   const miglioramento = formatList(data.miglioramento)
   const priorita = formatList(data.priorita)
   const obiettivi = formatList(data.obiettivi)
+  const budget = formatList(data.budget)
+  const fase = formatList(data.fase)
+  const fatturato = formatList(data.fatturato)
+  const racconto = (data.racconto || '').trim()
 
   const previewText = 'Hai fatto il primo passo verso il futuro della tua azienda, ti contatteremo entro 48 ore.'
 
@@ -299,17 +379,18 @@ function generateCustomerEmailHtml(data: AnswersPayload, score: number, fascia: 
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size: 14px; line-height: 1.6; background-color: #18152b; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); overflow: hidden;">
                   <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); width: 45%; vertical-align: top;"><strong style="color: #ffffff;">Settore:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${settore}</td></tr>
                   <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Team:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${team}</td></tr>
-                  <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Gestione marketing:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${gestioneMarketing}</td></tr>
-                  <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Fase dell'attività:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${fase}</td></tr>
-                  <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Fascia di fatturato:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${fatturato}</td></tr>
-                  <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Budget per crescere:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${budget}</td></tr>
-                  <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Come arrivano i nuovi clienti:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${acquisizione}</td></tr>
+                  <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Come gestisci il marketing:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${gestioneMarketing}</td></tr>
+                  <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Da dove arrivano i nuovi clienti:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${acquisizione}</td></tr>
                   <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Come mantieni il rapporto con loro:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${retention}</td></tr>
                   <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Strumenti che hai:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${asset}</td></tr>
                   <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Attività che porti avanti:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${attivita}</td></tr>
                   <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Come migliori il tuo prodotto o servizio:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${miglioramento}</td></tr>
                   <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Priorità di oggi:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${priorita}</td></tr>
-                  <tr><td style="padding: 10px 16px; vertical-align: top;"><strong style="color: #ffffff;">Obiettivi a 12 mesi:</strong></td><td style="padding: 10px 16px; color: #d0cce3;">${obiettivi}</td></tr>
+                  <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Obiettivi a 12 mesi:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${obiettivi}</td></tr>
+                  <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Quanto budget sei disposto ad investire per crescere:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${budget}</td></tr>
+                  <tr><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top;"><strong style="color: #ffffff;">Fase dell'attività:</strong></td><td style="padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #d0cce3;">${fase}</td></tr>
+                  <tr><td style="padding: 10px 16px; ${racconto ? 'border-bottom: 1px solid rgba(255,255,255,0.05); ' : ''}vertical-align: top;"><strong style="color: #ffffff;">Fascia di fatturato:</strong></td><td style="padding: 10px 16px; ${racconto ? 'border-bottom: 1px solid rgba(255,255,255,0.05); ' : ''}color: #d0cce3;">${fatturato}</td></tr>${racconto ? `
+                  <tr><td style="padding: 10px 16px; vertical-align: top;"><strong style="color: #ffffff;">Raccontaci la tua azienda:</strong></td><td style="padding: 10px 16px; color: #d0cce3;">${racconto}</td></tr>` : ''}
                 </table>
               </div>
 
@@ -433,19 +514,19 @@ function generateInternalNotificationHtml(data: AnswersPayload, score: number, f
     <!-- RISPOSTE QUESTIONARIO -->
     <h3 style="font-size: 14px; text-transform: uppercase; color: #888; margin: 0 0 10px 0;">Risposte date</h3>
     <table style="width: 100%; font-size: 13px; border-collapse: collapse;" cellspacing="0" cellpadding="8" border="1" bordercolor="#eee">
-      <tr><td style="background: #fafafa; width: 40%;"><strong>Settore</strong></td><td>${formatList(data.settore)}</td></tr>
+      <tr><td style="background: #fafafa; width: 42%;"><strong>Settore</strong></td><td>${formatList(data.settore)}</td></tr>
       <tr><td style="background: #fafafa;"><strong>Team</strong></td><td>${formatList(data.team)}</td></tr>
-      <tr><td style="background: #fafafa;"><strong>Gestione marketing</strong></td><td>${formatList(data.gestione_marketing)}</td></tr>
-      <tr><td style="background: #fafafa;"><strong>Fase dell'attività</strong></td><td>${formatList(data.fase)}</td></tr>
-      <tr><td style="background: #fafafa;"><strong>Fascia di fatturato</strong></td><td>${formatList(data.fatturato)}</td></tr>
-      <tr><td style="background: #fafafa;"><strong>Budget per crescere</strong></td><td>${formatList(data.budget)}</td></tr>
-      <tr><td style="background: #fafafa;"><strong>Canali di acquisizione</strong></td><td>${formatList(data.acquisizione)}</td></tr>
+      <tr><td style="background: #f3eeff;"><strong>Come gestisci il marketing</strong></td><td><strong>${formatList(data.gestione_marketing)}</strong></td></tr>
+      <tr><td style="background: #fafafa;"><strong>Da dove arrivano i nuovi clienti</strong></td><td>${formatList(data.acquisizione)}</td></tr>
       <tr><td style="background: #fafafa;"><strong>Fidelizzazione (retention)</strong></td><td>${formatList(data.retention)}</td></tr>
       <tr><td style="background: #fafafa;"><strong>Strumenti che ha</strong></td><td>${formatList(data.asset)}</td></tr>
       <tr><td style="background: #fafafa;"><strong>Attività portate avanti</strong></td><td>${formatList(data.attivita)}</td></tr>
       <tr><td style="background: #fafafa;"><strong>Metodo di miglioramento</strong></td><td>${formatList(data.miglioramento)}</td></tr>
       <tr><td style="background: #fafafa;"><strong>Priorità di oggi</strong></td><td>${formatList(data.priorita)}</td></tr>
       <tr><td style="background: #fafafa;"><strong>Obiettivi a 12 mesi</strong></td><td>${formatList(data.obiettivi)}</td></tr>
+      <tr><td style="background: #f3eeff;"><strong>Budget disposto a investire</strong></td><td><strong>${formatList(data.budget)}</strong></td></tr>
+      <tr><td style="background: #fafafa;"><strong>Fase dell'attività</strong></td><td>${formatList(data.fase)}</td></tr>
+      <tr><td style="background: #f3eeff;"><strong>Fascia di fatturato</strong></td><td><strong>${formatList(data.fatturato)}</strong></td></tr>
     </table>
 
   </div>
@@ -462,13 +543,9 @@ export default {
     if (request.method === 'GET') {
       const url = new URL(request.url)
       if (url.searchParams.get('init') === '1') {
-        const createRes = await fetch('https://api.brevo.com/v3/contacts/attributes/normal/TELEFONO', {
-          method: 'POST',
-          headers: { 'accept': 'application/json', 'api-key': env.BREVO_API_KEY, 'content-type': 'application/json' },
-          body: JSON.stringify({ type: 'text' }),
-        })
-        return new Response(await createRes.text(), {
-          status: createRes.status,
+        const created = await ensureBrevoAttributes(env.BREVO_API_KEY)
+        return new Response(JSON.stringify({ status: 'ok', attributes: created }), {
+          status: 200,
           headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
         })
       }
@@ -482,7 +559,7 @@ export default {
           headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
         })
       }
-      return new Response(JSON.stringify({ status: 'ok', service: 'adveny-potenziometro-brevo' }), {
+      return new Response(JSON.stringify({ status: 'ok', service: 'adveny-potenziometro-brevo', version: '2.0' }), {
         status: 200,
         headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       })
@@ -524,7 +601,7 @@ export default {
       const now = new Date()
       const dateStr = now.toLocaleString('it-IT', { timeZone: 'Europe/Rome' })
 
-      // 1. Aggiunta/aggiornamento del contatto in Brevo
+      // 1. Aggiunta/aggiornamento del contatto in Brevo con tutte le risposte
       const nameParts = (payload.nome_cognome || '').trim().split(/\s+/)
       const firstName = nameParts[0] || ''
       const lastName = nameParts.slice(1).join(' ') || ''
@@ -538,6 +615,21 @@ export default {
         SCORE: score,
         FASCIA: fascia.titolo,
         DATA_CONSENSO: payload.timestamp || now.toISOString(),
+        SETTORE: formatList(payload.settore),
+        TEAM: formatList(payload.team),
+        GESTIONE_MARKETING: formatList(payload.gestione_marketing),
+        ACQUISIZIONE: formatList(payload.acquisizione),
+        RETENTION: formatList(payload.retention),
+        STRUMENTI: formatList(payload.asset),
+        ATTIVITA: formatList(payload.attivita),
+        MIGLIORAMENTO: formatList(payload.miglioramento),
+        PRIORITA: formatList(payload.priorita),
+        OBIETTIVI: formatList(payload.obiettivi),
+        BUDGET: formatList(payload.budget),
+        FASE: formatList(payload.fase),
+        FATTURATO: formatList(payload.fatturato),
+        RACCONTO: payload.racconto && payload.racconto.trim() ? payload.racconto.trim() : '—',
+        RISPOSTE: formatRisposteSummary(payload),
       }
       if (cleanSms) {
         attributes.SMS = cleanSms
@@ -574,7 +666,8 @@ export default {
           cResError = await cRes.text()
           console.warn('Brevo contact warning:', cRes.status, cResError)
 
-          // Se Brevo rifiuta per duplicato SMS, riproviamo salvando tutti gli altri campi (AZIENDA, TELEFONO, SCORE, FASCIA...)
+          // Assicura che tutti gli attributi personalizzati esistano su Brevo e riprova senza SMS duplicato
+          await ensureBrevoAttributes(env.BREVO_API_KEY)
           delete attributes.SMS
           delete attributes.LANDLINE_NUMBER
 
@@ -590,7 +683,7 @@ export default {
           cResStatus = retryRes.status
           if (!retryRes.ok && retryRes.status !== 201 && retryRes.status !== 204) {
             cResError = await retryRes.text()
-            // Fallback resiliente: salva comunque il contatto con nome e cognome
+            // Fallback resiliente: salva comunque i campi base del contatto
             await fetch('https://api.brevo.com/v3/contacts', {
               method: 'POST',
               headers: {
@@ -602,7 +695,15 @@ export default {
                 email: payload.email.trim(),
                 updateEnabled: true,
                 listIds: env.BREVO_LIST_ID ? [parseInt(env.BREVO_LIST_ID, 10)] : undefined,
-                attributes: { NOME: firstName, COGNOME: lastName },
+                attributes: {
+                  NOME: firstName,
+                  COGNOME: lastName,
+                  AZIENDA: payload.azienda ? payload.azienda.trim() : '',
+                  TELEFONO: payload.telefono ? payload.telefono.trim() : '',
+                  SCORE: score,
+                  FASCIA: fascia.titolo,
+                  DATA_CONSENSO: payload.timestamp || now.toISOString(),
+                },
               }),
             })
           } else {

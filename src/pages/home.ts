@@ -457,6 +457,11 @@ function scrubMetrics(card: HTMLElement, trigger: ScrollTrigger.Vars) {
   draw()
   gsap.to(p, { v: 1, ease: 'power2.out', onUpdate: draw, scrollTrigger: { ...trigger, scrub: 0.6 } })
 }
+function caseStorySEO(c: Case) {
+  if (!c.story) return ''
+  const { headline, subtitle, sections, quote } = c.story
+  return `<div class="sr-only"><h4>${headline}</h4>${subtitle ? `<p>${subtitle}</p>` : ''}${sections.map((s) => `<h5>${s.title}</h5>${s.items.map((it) => `<p>${it.lead ? `<strong>${it.lead}</strong> ` : ''}${it.text}</p>`).join('')}`).join('')}${quote ? `<blockquote>${quote}</blockquote>` : ''}</div>`
+}
 function caseCard(c: Case, i: number) {
   const media = c.video
     ? `<video src="/video/${c.video}.mp4" poster="/video/${c.video}.jpg" muted loop playsinline preload="none"></video>`
@@ -476,6 +481,7 @@ function caseCard(c: Case, i: number) {
       </div>
       <button class="btn btn--glass btn--sm case__more" type="button" data-case-open="${i}"><span>Scopri di più</span></button>
     </div>
+    ${caseStorySEO(c)}
   </article>`
 }
 
